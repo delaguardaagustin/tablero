@@ -80,6 +80,7 @@
 
   <section class="t m"><h2>Ventas <span id="leads-al"></span></h2><div id="leads"></div><div id="proximos"></div></section>
   <section class="t m"><h2>Por cobrar</h2><div id="cobrar"></div></section>
+  <section class="t m"><h2>Quién abrió su demo</h2><div id="visitas"></div></section>
 
   <section class="t"><h2>Últimos movimientos</h2><div id="ultimos"></div></section>
 </main>
@@ -196,8 +197,15 @@ function pintar() {
     (cb.length && cc.length ? '<p class="nota">Son dos listas distintas: si anotó lo mismo en las dos, no lo sume dos veces.</p>' : '')
     : '<p class="vacio">Nadie le debe nada, según lo anotado.</p>';
 
+  /* --- visitas a las demos: se cuentan solo las aperturas reales (la vista previa de WhatsApp no cuenta) --- */
+  const vis = d.visitas || [];
+  $('#visitas').innerHTML = vis.length ? vis.slice(0, 25).map(v => '<div class="par"><span>' + esc(String(v.slug).replace(/^lead-/, '').replace(/-/g, ' ')) +
+    '<small>última vez: ' + corta(String(v.ultima).slice(0, 10)) + ' a las ' + esc(String(v.ultima).slice(11, 16)) + (v.hoy ? ' · hoy ' + v.hoy : '') + '</small></span><em>' + Number(v.total) + (Number(v.total) === 1 ? ' vez' : ' veces') + '</em></div>').join('') +
+    '<p class="nota">Últimos 30 días. Sus propias visitas no cuentan si abrió alguna demo con «?yo=1» al final en ese aparato.</p>'
+    : '<p class="vacio">Todavía nadie ha abierto una demo desde que se instaló el contador (13-10).</p>';
+
   /* --- últimos movimientos --- */
-  const SIGNO = { gasto: ['g', 'Gasto', '-'], ingreso: ['i', 'Ingreso', '+'], por_cobrar: ['c', 'Por cobrar', ''] };
+  const SIGNO = { gasto: ['g', 'Gasto', '-'], ingreso: ['i', 'Ingreso', '+'], por_cobrar: ['c', 'Por cobrar', ''], abono: ['i', 'Abono', '+'] };
   $('#ultimos').innerHTML = (d.ultimos || []).length ? d.ultimos.map(m => { const s = SIGNO[m.tipo] || ['', m.tipo, '']; return '<div class="par"><span>' + esc(m.concepto) +
     '<small>' + corta(m.fecha) + ' · ' + esc(m.ambito) + (m.tipo === 'gasto' ? ' · ' + esc(m.categoria) : '') + (m.cuenta ? ' · ' + esc(CUENTAS[m.cuenta] || m.cuenta) : '') + '</small></span>' +
     '<em><span class="chip ' + s[0] + '">' + s[1] + '</span> ' + s[2] + plata(m.monto) + '</em></div>'; }).join('') : '<p class="vacio">Todavía no hay movimientos. Escríbale al bot «gasté 2100 en almuerzo».</p>';
