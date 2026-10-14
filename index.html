@@ -152,9 +152,11 @@ function pintar() {
   const iP = sumar(mes, x => x.tipo === 'ingreso' && x.ambito === 'personal'), iN = sumar(mes, x => x.tipo === 'ingreso' && x.ambito === 'negocio'), iAnt = sumar(ant, x => x.tipo === 'ingreso');
   $('#k-gan').textContent = plata(iP + iN);
   $('#k-gan-p').textContent = (iP ? 'Personal ' + plata(iP) + ' · negocio ' + plata(iN) : 'Todo del negocio') + (iAnt ? ' · mes pasado ' + plata(iAnt) : '');
-  const cobBot = sumar(d.por_cobrar_bot || [], () => true), cobCrm = Number((d.crm || {}).por_cobrar || 0);
-  $('#k-cob').textContent = plata(Math.max(cobBot, cobCrm));
-  $('#k-cob-p').textContent = cobBot && cobCrm ? 'Anotado en el bot ' + plata(cobBot) + ' · en el CRM ' + plata(cobCrm) : cobBot ? 'Anotado en el bot' : cobCrm ? 'Según el CRM' : 'Nada pendiente anotado';
+  /* lo que le deben: clientes (CRM) + préstamos a personas («Mis préstamos» y el bot); son cosas distintas, así que se suman */
+  const esPrest = x => /^prestamo a /.test(x.concepto || ''), cobPers = sumar((d.por_cobrar_bot || []).filter(esPrest), () => true),
+    cobOtro = sumar((d.por_cobrar_bot || []).filter(x => !esPrest(x)), () => true), cobCrm = Number((d.crm || {}).por_cobrar || 0);
+  $('#k-cob').textContent = plata(Math.max(cobCrm, cobOtro) + cobPers);   /* un cobro a cliente anotado en el bot y en el CRM no se cuenta dos veces */
+  $('#k-cob-p').textContent = [cobCrm ? 'Clientes ' + plata(cobCrm) : '', cobPers ? 'préstamos ' + plata(cobPers) : '', cobOtro ? 'otros ' + plata(cobOtro) : ''].filter(Boolean).join(' · ') || 'Nada pendiente anotado';
 
   /* --- gasto por día --- */
   const dias = []; const base = new Date(d.hoy + 'T12:00:00Z');
@@ -189,12 +191,13 @@ function pintar() {
   $('#proximos').innerHTML = (d.proximos || []).length ? '<p class="nota" style="margin-top:14px">Lo que viene</p>' + d.proximos.map(p => '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em>' + corta(p.fecha) + '</em></div>').join('') : '';
 
   /* --- por cobrar --- */
-  const cb = (d.por_cobrar_bot || []).map(x => ({ quien: x.concepto, que: 'anotado el ' + corta(x.fecha), monto: x.monto }));
+  const nombre = t => String(t).replace(/^prestamo a /, '').replace(/\w/g, l => l.toUpperCase());
+  const cb = (d.por_cobrar_bot || []).map(x => ({ quien: /^prestamo a /.test(x.concepto) ? nombre(x.concepto) : x.concepto, que: (/^prestamo a /.test(x.concepto) ? 'préstamo desde el ' : 'anotado el ') + corta(x.fecha), monto: x.monto }));
   const cc = (d.por_cobrar_crm || []).map(x => ({ quien: String(x.cliente).replace(/^(cliente|lead)-/, '').replace(/-/g, ' '), que: x.concepto, monto: x.monto }));
   $('#cobrar').innerHTML = (cb.length || cc.length) ?
-    (cb.length ? '<p class="nota" style="margin:0 0 4px">Anotado en el bot</p>' + cb.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(x.que) + '</small></span><em>' + plata(x.monto) + '</em></div>').join('') : '') +
-    (cc.length ? '<p class="nota" style="margin:' + (cb.length ? '14px' : '0') + ' 0 4px">En el CRM</p>' + cc.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(x.que) + '</small></span><em>' + plata(x.monto) + '</em></div>').join('') : '') +
-    (cb.length && cc.length ? '<p class="nota">Son dos listas distintas: si anotó lo mismo en las dos, no lo sume dos veces.</p>' : '')
+    (cb.length ? '<p class="nota" style="margin:0 0 4px">Personas (préstamos)</p>' + cb.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(x.que) + '</small></span><em>' + plata(x.monto) + '</em></div>').join('') : '') +
+    (cc.length ? '<p class="nota" style="margin:' + (cb.length ? '14px' : '0') + ' 0 4px">Clientes (CRM)</p>' + cc.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(x.que) + '</small></span><em>' + plata(x.monto) + '</em></div>').join('') : '') +
+    (cb.length ? '<p class="nota">Los préstamos salen de «Mis préstamos» y de lo que le anota al bot. Anote cada préstamo en un solo lugar.</p>' : '')
     : '<p class="vacio">Nadie le debe nada, según lo anotado.</p>';
 
   /* --- visitas a las demos: se cuentan solo las aperturas reales (la vista previa de WhatsApp no cuenta) --- */
