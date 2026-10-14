@@ -191,13 +191,16 @@ function pintar() {
   $('#proximos').innerHTML = (d.proximos || []).length ? '<p class="nota" style="margin-top:14px">Lo que viene</p>' + d.proximos.map(p => '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em>' + corta(p.fecha) + '</em></div>').join('') : '';
 
   /* --- por cobrar --- */
-  const nombre = t => String(t).replace(/^prestamo a /, '').replace(/\w/g, l => l.toUpperCase());
-  const cb = (d.por_cobrar_bot || []).map(x => ({ quien: /^prestamo a /.test(x.concepto) ? nombre(x.concepto) : x.concepto, que: (/^prestamo a /.test(x.concepto) ? 'préstamo desde el ' : 'anotado el ') + corta(x.fecha), monto: x.monto }));
+  const esP = t => /^prestamo a /.test(t || ''), nombre = t => String(t).replace(/^prestamo a /, '').replace(/(^|\s)\S/g, l => l.toUpperCase());
+  const fila = x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(x.que) + '</small></span><em>' + plata(x.monto) + '</em></div>';
+  const grupo = (titulo, lista, primero) => lista.length ? '<p class="nota" style="margin:' + (primero ? '0' : '14px') + ' 0 4px">' + titulo + '</p>' + lista.map(fila).join('') : '';
+  const cp = (d.por_cobrar_bot || []).filter(x => esP(x.concepto)).map(x => ({ quien: nombre(x.concepto), que: 'préstamo desde el ' + corta(x.fecha), monto: x.monto }));
+  const co = (d.por_cobrar_bot || []).filter(x => !esP(x.concepto)).map(x => ({ quien: x.concepto, que: 'anotado en el bot el ' + corta(x.fecha), monto: x.monto }));
   const cc = (d.por_cobrar_crm || []).map(x => ({ quien: String(x.cliente).replace(/^(cliente|lead)-/, '').replace(/-/g, ' '), que: x.concepto, monto: x.monto }));
-  $('#cobrar').innerHTML = (cb.length || cc.length) ?
-    (cb.length ? '<p class="nota" style="margin:0 0 4px">Personas (préstamos)</p>' + cb.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(x.que) + '</small></span><em>' + plata(x.monto) + '</em></div>').join('') : '') +
-    (cc.length ? '<p class="nota" style="margin:' + (cb.length ? '14px' : '0') + ' 0 4px">Clientes (CRM)</p>' + cc.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(x.que) + '</small></span><em>' + plata(x.monto) + '</em></div>').join('') : '') +
-    (cb.length ? '<p class="nota">Los préstamos salen de «Mis préstamos» y de lo que le anota al bot. Anote cada préstamo en un solo lugar.</p>' : '')
+  $('#cobrar').innerHTML = (cp.length || co.length || cc.length) ?
+    grupo('Clientes (CRM)', cc, true) + grupo('Personas (préstamos)', cp, !cc.length) + grupo('Otros anotados en el bot', co, !cc.length && !cp.length) +
+    (cp.length ? '<p class="nota">Los préstamos salen de «Mis préstamos» y de lo que le anota al bot. Anote cada préstamo en un solo lugar.</p>' : '') +
+    (co.length && cc.length ? '<p class="nota">Si un cobro a un cliente está en el bot y en el CRM, no lo sume dos veces.</p>' : '')
     : '<p class="vacio">Nadie le debe nada, según lo anotado.</p>';
 
   /* --- visitas a las demos: se cuentan solo las aperturas reales (la vista previa de WhatsApp no cuenta) --- */
