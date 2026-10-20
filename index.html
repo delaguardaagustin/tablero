@@ -47,6 +47,9 @@
   .pest button { min-height:36px; padding:0 12px; border:0; background:transparent; font-size:13px; color:var(--suave); text-transform:none; letter-spacing:0; }
   .pest button[aria-pressed="true"] { background:var(--tarjeta2); color:var(--tinta); font-weight:600; }
   .chip { display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; background:var(--tarjeta2); color:var(--suave); }
+  .meta { height:12px; border-radius:6px; background:var(--tarjeta2); overflow:hidden; margin:10px 0 6px; display:flex; }
+  .meta i { display:block; height:100%; } .meta .c1 { background:var(--verde); } .meta .c2 { background:var(--ambar); opacity:.75; }
+  .atr { color:var(--rojo) !important; } .hoyp { color:var(--ambar) !important; }
   .chip.g { color:var(--rojo); } .chip.i { color:var(--verde); } .chip.c { color:var(--ambar); }
   .vacio { color:var(--suave); font-size:14px; margin:4px 0; }
   .nota { color:var(--suave); font-size:12px; margin:10px 0 0; }
@@ -180,15 +183,21 @@ function pintar() {
   $('#negocio').innerHTML = '<div class="par"><span>Ganado</span><em style="color:var(--verde)">' + plata(iN) + '</em></div>' +
     '<div class="par"><span>Gastado</span><em>' + plata(gN) + '</em></div>' +
     '<div class="par total"><span>Queda</span><em style="color:' + (iN - gN < 0 ? 'var(--rojo)' : 'var(--verde)') + '">' + plata(iN - gN) + '</em></div>' +
-    '<p class="nota">Solo lo que usted le anota al bot como «negocio». ' + (Number((d.crm || {}).ganado) ? 'El CRM registra ' + plata(d.crm.ganado) + ' cobrados en total.' : '') + '</p>';
+    '<p class="nota">Solo lo que usted le anota al bot como «negocio». ' + (Number((d.crm || {}).ganado) ? 'El CRM registra ' + plata(d.crm.ganado) + ' cobrados en total.' : '') + '</p>' + metaVentas(d.crm || {});
 
   /* --- ventas --- */
-  const ORDEN = ['nuevo', 'contactado', 'conversando', 'propuesta', 'cliente', 'ganado', 'descartado'];
-  const leads = (d.leads || []).slice().sort((a, b) => (ORDEN.indexOf(a.estado) + 99) % 99 - (ORDEN.indexOf(b.estado) + 99) % 99), topeL = Math.max(1, ...leads.map(l => l.n));
+  /* Embudo: cada etapa en orden, con nombre claro. Descartados y perdidos van aparte, en gris. */
+  const ETAPAS = [['nuevo', 'Demo armada, sin enviar'], ['enviado', 'Demo enviada'], ['contactado', 'Con seguimiento'], ['conversando', 'Conversando'], ['propuesta', 'Con propuesta'], ['cliente', 'Clientes']];
+  const n = (e) => Number(((d.leads || []).find(l => l.estado === e) || {}).n || 0), topeL = Math.max(1, ...(d.leads || []).map(l => Number(l.n)));
   $('#leads-al').textContent = d.leads_al ? 'al ' + corta(d.leads_al) : '';
-  $('#leads').innerHTML = leads.length ? leads.map(l => '<div class="fila"><span>' + esc(l.estado) + '</span><span class="barra"><i style="width:' + (100 * l.n / topeL).toFixed(0) + '%;background:' + (l.estado === 'descartado' ? 'var(--linea)' : 'var(--azul)') + '"></i></span><em>' + l.n + '</em></div>').join('')
+  const fuera = n('descartado') + n('perdido'), alcanzados = n('enviado') + n('contactado') + n('conversando') + n('propuesta') + n('cliente') + n('perdido');
+  $('#leads').innerHTML = (d.leads || []).length ? ETAPAS.filter(([e]) => n(e)).map(([e, t]) => '<div class="fila"><span>' + t + '</span><span class="barra"><i style="width:' + (100 * n(e) / topeL).toFixed(0) + '%;background:' + (e === 'cliente' ? 'var(--verde)' : e === 'nuevo' ? 'var(--ambar)' : 'var(--azul)') + '"></i></span><em>' + n(e) + '</em></div>').join('') +
+      (fuera ? '<div class="fila"><span style="color:var(--suave)">Descartados o perdidos</span><span class="barra"><i style="width:' + (100 * fuera / topeL).toFixed(0) + '%;background:var(--linea)"></i></span><em style="color:var(--suave)">' + fuera + '</em></div>' : '') +
+      (alcanzados ? '<p class="nota">De ' + alcanzados + ' negocios que recibieron su demo, ' + (n('conversando') + n('propuesta')) + ' están conversando (' + Math.round(100 * (n('conversando') + n('propuesta')) / alcanzados) + ' %) y ' + n('cliente') + ' son clientes (' + Math.round(100 * n('cliente') / alcanzados) + ' %).' + (n('nuevo') ? ' Hay ' + n('nuevo') + ' demos listas esperando ser enviadas.' : '') + '</p>' : '')
     : '<p class="vacio">No hay prospectos en la base.</p>';
-  $('#proximos').innerHTML = (d.proximos || []).length ? '<p class="nota" style="margin-top:14px">Lo que viene</p>' + d.proximos.map(p => '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em>' + corta(p.fecha) + '</em></div>').join('') : '';
+  const prox = (d.proximos || []).slice().sort((a, b) => String(a.fecha).localeCompare(String(b.fecha))), atras = prox.filter(p => p.fecha && p.fecha < d.hoy).length;
+  $('#proximos').innerHTML = prox.length ? '<p class="nota" style="margin-top:14px">Lo que viene' + (atras ? ' · <b class="atr">' + atras + ' atrasado' + (atras === 1 ? '' : 's') + '</b>' : '') + '</p>' +
+    prox.map(p => { const c = p.fecha < d.hoy ? 'atr' : p.fecha === d.hoy ? 'hoyp' : ''; return '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em class="' + c + '">' + (c === 'hoyp' ? 'hoy' : corta(p.fecha)) + '</em></div>'; }).join('') : '';
 
   /* --- por cobrar --- */
   const esP = t => /^prestamo a /.test(t || ''), nombre = t => String(t).replace(/^prestamo a /, '').replace(/(^|\s)\S/g, l => l.toUpperCase());
@@ -215,6 +224,16 @@ function pintar() {
   $('#ultimos').innerHTML = (d.ultimos || []).length ? d.ultimos.map(m => { const s = SIGNO[m.tipo] || ['', m.tipo, '']; return '<div class="par"><span>' + esc(m.concepto) +
     '<small>' + corta(m.fecha) + ' · ' + esc(m.ambito) + (m.tipo === 'gasto' ? ' · ' + esc(m.categoria) : '') + (m.cuenta ? ' · ' + esc(CUENTAS[m.cuenta] || m.cuenta) : '') + '</small></span>' +
     '<em><span class="chip ' + s[0] + '">' + s[1] + '</span> ' + s[2] + plata(m.monto) + '</em></div>'; }).join('') : '<p class="vacio">Todavía no hay movimientos. Escríbale al bot «gasté 2100 en almuerzo».</p>';
+}
+
+/* Meta de ventas: $2.000.000 vendidos (cobrado + por cobrar a clientes), la cifra para decidir el cambio a empresa. */
+const META = 2000000;
+function metaVentas(crm) {
+  const cob = Number(crm.ganado || 0), pend = Number(crm.por_cobrar || 0), tot = cob + pend; if (!tot) return '';
+  const a = Math.min(100, 100 * cob / META), b = Math.min(100 - a, 100 * pend / META);
+  return '<p class="nota" style="margin-top:14px">Meta de ventas: ' + plata(META) + '</p><div class="meta" role="img" aria-label="Vendido ' + plata(tot) + ' de ' + plata(META) + '"><i class="c1" style="width:' + a.toFixed(1) + '%"></i><i class="c2" style="width:' + b.toFixed(1) + '%"></i></div>' +
+    '<div class="par"><span>Vendido en total<small>cobrado ' + plata(cob) + ' · por cobrar ' + plata(pend) + '</small></span><em>' + Math.round(100 * tot / META) + ' %</em></div>' +
+    (tot < META ? '<p class="nota">Faltan ' + plata(META - tot) + ' (unas ' + Math.ceil((META - tot) / 120000) + ' páginas de $120.000).</p>' : '<p class="nota" style="color:var(--verde)">¡Meta cumplida!</p>');
 }
 
 function pintarCategorias() {
