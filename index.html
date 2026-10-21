@@ -80,6 +80,7 @@
     <span class="pest" role="group" aria-label="Ver gastos de"><button type="button" data-amb="personal" aria-pressed="true">Personal</button><button type="button" data-amb="negocio" aria-pressed="false">Negocio</button></span></h2>
     <div id="cats"></div></section>
   <section class="t m"><h2>Negocio este mes</h2><div id="negocio"></div></section>
+  <section class="t m"><h2>SENTRY-CODE · lo ganado de verdad <span>desde el inicio</span></h2><div id="sentry"></div></section>
 
   <section class="t m"><h2>Ventas <span id="leads-al"></span></h2><div id="leads"></div><div id="proximos"></div></section>
   <section class="t m"><h2>Por cobrar</h2><div id="cobrar"></div></section>
@@ -184,6 +185,17 @@ function pintar() {
     '<div class="par"><span>Gastado</span><em>' + plata(gN) + '</em></div>' +
     '<div class="par total"><span>Queda</span><em style="color:' + (iN - gN < 0 ? 'var(--rojo)' : 'var(--verde)') + '">' + plata(iN - gN) + '</em></div>' +
     '<p class="nota">Solo lo que usted le anota al bot como «negocio». ' + (Number((d.crm || {}).ganado) ? 'El CRM registra ' + plata(d.crm.ganado) + ' cobrados en total.' : '') + '</p>' + metaVentas(d.crm || {});
+
+  /* --- SENTRY-CODE desde el inicio: lo cobrado menos lo que se gastó (dominios, correo, placas), según el CRM. Los reembolsos que
+     debe un cliente son gastos que vuelven, por eso se muestran aparte de las ventas por cobrar. --- */
+  const crm = d.crm || {}, cobS = Number(crm.ganado || 0), gasS = Number(crm.gastos || 0), penS = Number(crm.por_cobrar || 0);
+  const reemb = (d.por_cobrar_crm || []).filter(x => /reembolso|correo/i.test(x.concepto || '')).reduce((s, x) => s + Number(x.monto || 0), 0);
+  $('#sentry').innerHTML = '<div class="par"><span>Cobrado a clientes</span><em style="color:var(--verde)">' + plata(cobS) + '</em></div>' +
+    '<div class="par"><span>Gastado<small>dominios, correo y placas</small></span><em>−' + plata(gasS) + '</em></div>' +
+    '<div class="par total"><span>Ganancia real hoy</span><em style="color:' + (cobS - gasS < 0 ? 'var(--rojo)' : 'var(--verde)') + '">' + plata(cobS - gasS) + '</em></div>' +
+    '<div class="par" style="margin-top:10px"><span>Por cobrar<small>ventas ' + plata(penS - reemb) + ' · reembolsos de gastos ' + plata(reemb) + '</small></span><em style="color:var(--ambar)">' + plata(penS) + '</em></div>' +
+    '<div class="par total"><span>Si le pagan todo</span><em>' + plata(cobS - gasS + penS) + '</em></div>' +
+    '<p class="nota">Sale del CRM (cobros y gastos de clientes). Lo que le anota al bot como «negocio» va en el cuadro de este mes.</p>';
 
   /* --- ventas --- */
   /* Embudo: cada etapa en orden, con nombre claro. Descartados y perdidos van aparte, en gris. */
