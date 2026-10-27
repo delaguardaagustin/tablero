@@ -217,9 +217,9 @@ function pintar() {
   const grupo = (titulo, lista, primero) => lista.length ? '<p class="nota" style="margin:' + (primero ? '0' : '14px') + ' 0 4px">' + titulo + '</p>' + lista.map(fila).join('') : '';
   const cp = (d.por_cobrar_bot || []).filter(x => esP(x.concepto)).map(x => ({ quien: nombre(x.concepto), que: 'préstamo desde el ' + corta(x.fecha), monto: x.monto }));
   const co = (d.por_cobrar_bot || []).filter(x => !esP(x.concepto)).map(x => ({ quien: x.concepto, que: 'anotado en el bot el ' + corta(x.fecha), monto: x.monto }));
-  const cc = (d.por_cobrar_crm || []).map(x => ({ quien: String(x.cliente).replace(/^(cliente|lead)-/, '').replace(/-/g, ' '), que: x.concepto, monto: x.monto }));
+  const cc = (d.por_cobrar_crm || []).map(x => ({ quien: String(x.cliente).replace(/^(cliente|lead)-/, '').replace(/-/g, ' '), que: x.concepto, monto: x.monto, fecha: x.fecha }));
   $('#cobrar').innerHTML = (cp.length || co.length || cc.length) ?
-    grupo('Clientes (CRM)', cc, true) + grupo('Personas (préstamos)', cp, !cc.length) + grupo('Otros anotados en el bot', co, !cc.length && !cp.length) +
+    cobrosClientes(cc, d.hoy) + grupo('Personas (préstamos)', cp, !cc.length) + grupo('Otros anotados en el bot', co, !cc.length && !cp.length) +
     (cp.length ? '<p class="nota">Los préstamos salen de «Mis préstamos» y de lo que le anota al bot. Anote cada préstamo en un solo lugar.</p>' : '') +
     (co.length && cc.length ? '<p class="nota">Si un cobro a un cliente está en el bot y en el CRM, no lo sume dos veces.</p>' : '')
     : '<p class="vacio">Nadie le debe nada, según lo anotado.</p>';
@@ -236,6 +236,32 @@ function pintar() {
   $('#ultimos').innerHTML = (d.ultimos || []).length ? d.ultimos.map(m => { const s = SIGNO[m.tipo] || ['', m.tipo, '']; return '<div class="par"><span>' + esc(m.concepto) +
     '<small>' + corta(m.fecha) + ' · ' + esc(m.ambito) + (m.tipo === 'gasto' ? ' · ' + esc(m.categoria) : '') + (m.cuenta ? ' · ' + esc(CUENTAS[m.cuenta] || m.cuenta) : '') + '</small></span>' +
     '<em><span class="chip ' + s[0] + '">' + s[1] + '</span> ' + s[2] + plata(m.monto) + '</em></div>'; }).join('') : '<p class="vacio">Todavía no hay movimientos. Escríbale al bot «gasté 2100 en almuerzo».</p>';
+}
+
+/* Cobros a clientes desglosados: explicación en palabras, cada cliente con su subtotal y las mantenciones mensuales aparte.
+   La fecha llega solo si el flujo de n8n ya trae «fecha»; sin ella no se marca lo atrasado. */
+const esMant = t => /mantenci[oó]n mensual/i.test(t || '');
+const corto = t => { const s = String(t || '').split(/\s\(|;|,\s|\s—\s/)[0].trim(); return s.length > 70 ? s.slice(0, 68) + '…' : s; };
+function cobrosClientes(cc, hoy) {
+  if (!cc.length) return '';
+  const total = cc.reduce((s, x) => s + Number(x.monto || 0), 0), conFecha = cc.some(x => x.fecha), finMes = String(hoy).slice(0, 8) + '31';
+  const atr = cc.filter(x => x.fecha && x.fecha < hoy).reduce((s, x) => s + Number(x.monto || 0), 0);
+  const mes = cc.filter(x => x.fecha && x.fecha <= finMes).reduce((s, x) => s + Number(x.monto || 0), 0);
+  const mants = cc.filter(x => esMant(x.que) && (!x.fecha || x.fecha > hoy)), mantT = mants.reduce((s, x) => s + Number(x.monto || 0), 0);
+  const porCli = {}; cc.slice().sort((a, b) => String(a.fecha || '9999').localeCompare(String(b.fecha || '9999')) || b.monto - a.monto).forEach(x => { (porCli[x.quien] = porCli[x.quien] || []).push(x); });
+  const clis = Object.keys(porCli).sort((a, b) => porCli[b].reduce((s, x) => s + x.monto, 0) - porCli[a].reduce((s, x) => s + x.monto, 0));
+  const mayor = cc.slice().sort((a, b) => b.monto - a.monto)[0];
+  let txt = 'Son ' + cc.length + ' cobros (' + clis.map(c => porCli[c].length + ' de ' + c).join(' y ') + ') por ' + plata(total) + '.';
+  if (conFecha) txt += (atr ? ' ' + plata(atr) + ' ya pasaron su fecha.' : ' Nada atrasado.') + ' De aquí a fin de mes se pueden cobrar ' + plata(mes) + '.';
+  if (mantT) txt += ' Las mantenciones (' + plata(mantT) + ') todavía no vencen.';
+  if (mayor) txt += ' Lo más grande: ' + corto(mayor.que) + ' de ' + mayor.quien + ' (' + plata(mayor.monto) + ')' + (mayor.fecha && mayor.fecha < hoy ? ', atrasado desde el ' + corta(mayor.fecha) : '') + '.';
+  const item = x => { const a = x.fecha && x.fecha < hoy;
+    return '<div class="par"><span>' + esc(corto(x.que)) + '<small>' + (x.fecha ? (a ? '<b class="atr">atrasado</b> · desde el ' : 'vence el ') + corta(x.fecha) : '') + '</small></span><em' + (a ? ' class="atr"' : '') + '>' + plata(x.monto) + '</em></div>'; };
+  return '<p class="nota" style="margin:0 0 4px">Clientes (CRM)</p><p class="nota" style="margin:0 0 8px">' + esc(txt) + '</p>' +
+    clis.map(c => '<div class="par total"><span>' + esc(c) + '<small>' + porCli[c].length + (porCli[c].length === 1 ? ' cobro' : ' cobros') + '</small></span><em>' + plata(porCli[c].reduce((s, x) => s + x.monto, 0)) + '</em></div>' + porCli[c].map(item).join('')).join('') +
+    '<div class="par total" style="margin-top:6px"><span>Total clientes</span><em style="color:var(--ambar)">' + plata(total) + '</em></div>' +
+    (mants.length ? '<p class="nota" style="margin:14px 0 4px">Mantenciones mensuales</p>' + mants.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + esc(corto(x.que)) + (x.fecha ? ' · primer cobro ' + corta(x.fecha) : '') + '</small></span><em>' + plata(x.monto) + ' al mes</em></div>').join('') +
+      '<div class="par total"><span>Total al mes</span><em style="color:var(--verde)">' + plata(mantT) + '</em></div>' : '');
 }
 
 /* Meta de ventas: $2.000.000 vendidos (cobrado + por cobrar a clientes), la cifra para decidir el cambio a empresa. */
