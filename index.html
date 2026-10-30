@@ -94,6 +94,9 @@
   .pill.ambar { background:color-mix(in srgb, var(--ambar) 18%, transparent); color:var(--ambar); }
   .pill.verde { background:color-mix(in srgb, var(--verde) 16%, transparent); color:var(--verde); }
 
+  .fijos-tot { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
+  .fijos-tot div { background:var(--hundido); border:1px solid var(--linea); border-radius:10px; padding:10px 12px; font-size:12.5px; color:var(--suave); min-width:0; }
+  .fijos-tot b { display:block; font-size:clamp(16px, 4.6vw, 21px); color:var(--tinta); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
   .pest { display:inline-flex; margin-left:auto; border:1px solid var(--linea); border-radius:9px; overflow:hidden; }
   .pest button { min-height:36px; padding:0 12px; border:0; background:transparent; font-size:13px; color:var(--suave); }
   .pest button[aria-pressed="true"] { background:var(--tarjeta2); color:var(--tinta); font-weight:600; }
@@ -121,6 +124,7 @@
 </header></div>
 <nav aria-label="Ir a"><div class="ancho">
   <button type="button" data-ir="p-resumen">Resumen</button>
+  <button type="button" data-ir="p-fijos" id="ir-fijos" hidden>Cuentas del mes</button>
   <button type="button" data-ir="p-plata">Mi plata</button>
   <button type="button" data-ir="p-sentry">SENTRY-CODE</button>
   <button type="button" data-ir="p-ventas">Ventas</button>
@@ -136,6 +140,9 @@
   <section class="t kpi" style="--c:var(--rojo)"><h3>Gastado este mes</h3><b id="k-gasto">—</b><p id="k-gasto-p"></p></section>
   <section class="t kpi" style="--c:var(--azul)"><h3>Ganado este mes</h3><b id="k-gan">—</b><p id="k-gan-p"></p></section>
   <section class="t kpi" style="--c:var(--ambar)"><h3>Me deben</h3><b id="k-cob">—</b><p id="k-cob-p"></p></section>
+
+  <div class="parte" id="p-fijos" hidden><span class="n" style="--c:var(--rojo)">$</span><div><h2>Cuentas del mes</h2><p>Lo que paga todos los meses. Se marca solo cuando se lo anota al bot, por ejemplo «pagué luz 32000».</p></div></div>
+  <section class="t" id="t-fijos" hidden><div class="fijos-tot" id="fijos-tot"></div><div class="meta" id="fijos-barra"></div><div id="fijos"></div></section>
 
   <div class="parte" id="p-plata"><span class="n">2</span><div><h2>Mi plata</h2><p>Saldos de sus cuentas y lo que le anota al bot de gastos.</p></div></div>
   <section class="t c"><h3>Cuentas</h3><p class="ayuda">Último saldo que le anotó al bot en cada una.</p><div id="cuentas"></div></section>
@@ -249,8 +256,11 @@ function pintar() {
     li('rojo', 'Este mes gastó <b>' + plata(gP + gN) + '</b>' + (gAnt ? ' (el mes pasado fueron ' + plata(gAnt) + ').' : '.')),
     meDeben ? li('ambar', 'Le deben <b>' + plata(meDeben) + '</b>' + (atrC ? ', de eso <b class="rojo">' + plata(atrC) + '</b> ya está atrasado.' : '.')) : li('verde', 'Nadie le debe nada, según lo anotado.'),
     cobS ? li('azul', 'Con SENTRY-CODE lleva una ganancia real de <b class="verde">' + plata(cobS - gasS) + '</b>' + (penS ? '; si le pagan todo, llega a <b>' + plata(cobS - gasS + penS) + '</b>.' : '.')) : '',
+    falta(d, deuda).n ? li('rojo', 'Le quedan <b>' + falta(d, deuda).n + (falta(d, deuda).n === 1 ? ' cuenta' : ' cuentas') + '</b> por pagar este mes' + (falta(d, deuda).monto ? ', al menos <b>' + plata(falta(d, deuda).monto) + '</b>.' : '.')) : '',
     atras ? li('rojo', 'Tiene <b>' + atras + (atras === 1 ? ' seguimiento atrasado' : ' seguimientos atrasados') + '</b> en Ventas.') : '',
   ].filter(Boolean).join('');
+
+  pintarFijos(d, disp, deuda);
 
   /* --- gasto por día --- */
   const dias = []; const base = new Date(d.hoy + 'T12:00:00Z');
@@ -324,6 +334,23 @@ function pintar() {
   $('#ultimos').innerHTML = (d.ultimos || []).length ? recortar(d.ultimos.map(m => { const s = SIGNO[m.tipo] || ['', m.tipo, '']; return '<div class="par"><span>' + esc(m.concepto) +
     '<small>' + corta(m.fecha) + ' · ' + esc(m.ambito) + (m.tipo === 'gasto' ? ' · ' + esc(m.categoria) : '') + (m.cuenta ? ' · ' + esc(CUENTAS[m.cuenta] || m.cuenta) : '') + '</small></span>' +
     '<em><span class="chip ' + s[0] + '">' + s[1] + '</span> ' + s[2] + plata(m.monto) + '</em></div>'; }), 8, 'movimientos') : '<p class="vacio">Todavía no hay movimientos. Escríbale al bot «gasté 2100 en almuerzo».</p>';
+}
+
+/* Cuentas fijas del mes. La lista y los montos vienen del flujo privado de n8n (este repositorio es público). Una cuenta está pagada
+   si lo anotado al bot este mes llega a su monto; sin monto, basta con que haya algo anotado. Comida no se «paga»: solo muestra lo gastado.
+   Sin el campo «fijos» (flujo antiguo) la sección queda oculta. */
+const fijosDe = (d, deuda) => (d.fijos || []).map(f => { const monto = f.monto == null ? (/tarjeta/i.test(f.nombre) && deuda ? deuda : null) : Number(f.monto), pagado = Number(f.pagado || 0), variable = /comida/i.test(f.nombre);
+  return { ...f, monto, pagado, variable, listo: !variable && (monto ? pagado >= monto : pagado > 0) }; });
+function falta(d, deuda) { const p = fijosDe(d, deuda).filter(f => !f.variable && !f.listo); return { n: p.length, monto: p.reduce((s, f) => s + Math.max(0, (f.monto || 0) - f.pagado), 0) }; }
+function pintarFijos(d, disp, deuda) {
+  const l = fijosDe(d, deuda), hay = l.length > 0;
+  ['#p-fijos', '#t-fijos', '#ir-fijos'].forEach(s => { $(s).hidden = !hay; }); if (!hay) return;
+  const cuentas = l.filter(f => !f.variable), total = cuentas.reduce((s, f) => s + (f.monto || f.pagado), 0), pagado = cuentas.reduce((s, f) => s + f.pagado, 0), f = falta(d, deuda), sinMonto = cuentas.filter(x => !x.monto && !x.pagado).length;
+  $('#fijos-tot').innerHTML = '<div>Total del mes<b>' + plata(total) + '</b></div><div>Ya pagado<b class="verde">' + plata(pagado) + '</b></div><div>Falta pagar<b class="' + (f.monto ? 'rojo' : 'verde') + '">' + plata(f.monto) + '</b></div>';
+  const a = total ? Math.min(100, 100 * pagado / total) : 0; $('#fijos-barra').innerHTML = '<i class="c1" style="width:' + a.toFixed(1) + '%"></i>'; $('#fijos-barra').setAttribute('role', 'img'); $('#fijos-barra').setAttribute('aria-label', 'Pagado ' + plata(pagado) + ' de ' + plata(total));
+  $('#fijos').innerHTML = l.map(x => '<div class="par"><span>' + esc(x.nombre) + '<small>' + (x.variable ? 'gastado este mes' : x.listo ? 'pagado este mes' : x.pagado ? 'abonado ' + plata(x.pagado) : x.monto ? 'por pagar' : 'por pagar · sin monto definido') + '</small></span><em>' +
+    (x.variable ? plata(x.pagado) : '<span class="pill ' + (x.listo ? 'verde">Pagado' : 'rojo">Falta') + '</span>' + (x.monto ? plata(x.monto) : x.pagado ? plata(x.pagado) : '—')) + '</em></div>').join('') +
+    '<p class="nota">' + (f.monto && disp ? 'Con lo que tiene en sus cuentas, después de pagar lo que falta le quedan <b class="' + (disp - f.monto < 0 ? 'rojo' : 'verde') + '">' + plata(disp - f.monto) + '</b>. ' : '') + (sinMonto ? sinMonto + (sinMonto === 1 ? ' cuenta sin monto no suma' : ' cuentas sin monto no suman') + ' en el total.' : '') + '</p>';
 }
 
 /* Cobros a clientes desglosados: explicación en palabras, cada cliente en su bloque con subtotal, y las mantenciones mensuales aparte.
