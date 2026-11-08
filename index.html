@@ -16,29 +16,41 @@
   .ancho { max-width:1180px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
 
   /* cabecera y menú de secciones */
-  header { padding-block:20px 4px; display:flex; align-items:center; gap:12px; }
+  header { padding-block:20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--linea); }
   h1 { margin:0; font-size:24px; letter-spacing:-.02em; flex:1; line-height:1.2; }
   h1 small { display:block; font-size:13px; font-weight:400; color:var(--suave); margin-top:3px; letter-spacing:0; }
   .btn { min-height:44px; padding:0 16px; border:1px solid var(--linea); border-radius:10px; background:var(--tarjeta2); font-weight:600; }
   .btn:hover { border-color:var(--verde); } .btn:disabled { opacity:.6; cursor:wait; }
-  nav { position:sticky; top:0; z-index:5; background:color-mix(in srgb, var(--fondo) 92%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--linea); padding-top:env(safe-area-inset-top, 0px); }
-  nav .ancho { display:flex; gap:6px; overflow-x:auto; padding-block:10px; scrollbar-width:none; }
-  nav .ancho::-webkit-scrollbar { display:none; }
-  nav button { flex:none; min-height:36px; padding:0 14px; border:1px solid var(--linea); border-radius:20px; background:var(--tarjeta); font-size:13px; font-weight:600; color:var(--suave); white-space:nowrap; }
-  nav button:hover, nav button:focus-visible { color:var(--tinta); border-color:var(--suave); }
+  nav { position:sticky; top:0; z-index:5; background:color-mix(in srgb, var(--fondo) 94%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--linea); padding-top:env(safe-area-inset-top, 0px); }
+  .menu { display:flex; gap:4px; overflow-x:auto; padding-block:8px; scrollbar-width:none; }
+  .menu::-webkit-scrollbar { display:none; }
+  nav button { flex:none; display:flex; align-items:center; gap:8px; min-height:40px; padding:0 14px; border:0; border-radius:10px; background:transparent; font-size:14px; font-weight:600; color:var(--suave); white-space:nowrap; text-align:left; }
+  nav button i { width:8px; height:8px; border-radius:50%; background:var(--c); opacity:.5; flex:none; }
+  nav button:hover, nav button:focus-visible { color:var(--tinta); background:var(--tarjeta); }
+  nav button[aria-selected="true"] { color:var(--tinta); background:var(--tarjeta2); box-shadow:inset 0 0 0 1px var(--linea); }
+  nav button[aria-selected="true"] i { opacity:1; }
 
-  main { padding-block:14px 64px; display:grid; gap:12px; grid-template-columns:repeat(12, minmax(0, 1fr)); }
+  main { padding-block:16px 64px; display:grid; gap:14px; grid-template-columns:repeat(12, minmax(0, 1fr)); align-content:start; min-width:0; }
   main > * { grid-column:span 12; min-width:0; }
+  .panel { display:contents; } .panel[hidden] { display:none; }
+  .panel > * { grid-column:span 12; min-width:0; }
+  @media (min-width:1000px) {
+    .caja { display:grid; grid-template-columns:200px minmax(0, 1fr); gap:28px; align-items:start; }
+    nav { top:16px; margin-top:16px; padding:8px; border:1px solid var(--linea); border-radius:14px; background:var(--tarjeta); backdrop-filter:none; -webkit-backdrop-filter:none; }
+    .menu { flex-direction:column; overflow:visible; padding:0; }
+    nav button { width:100%; }
+  }
 
   /* encabezado de cada parte */
-  .parte { display:flex; gap:12px; align-items:flex-start; margin-top:22px; padding-bottom:2px; }
-  #p-resumen { margin-top:4px; }
+  .parte { display:flex; gap:12px; align-items:flex-start; margin-top:4px; padding-bottom:2px; }
+  .parte .n { display:none !important; }
+  #p-fijos { margin-top:20px; }
   .parte .n { flex:none; width:30px; height:30px; border-radius:9px; display:grid; place-items:center; font-weight:700; font-size:14px; background:var(--tarjeta2); border:1px solid var(--linea); color:var(--c, var(--verde)); }
   .parte h2 { margin:0; font-size:19px; letter-spacing:-.01em; line-height:1.3; text-wrap:balance; }
   .parte p { margin:2px 0 0; font-size:13px; color:var(--suave); max-width:62ch; }
 
   /* tarjetas */
-  .t { background:var(--tarjeta); border:1px solid var(--linea); border-radius:14px; padding:16px; }
+  .t { background:var(--tarjeta); border:1px solid var(--linea); border-radius:14px; padding:18px; }
   .t h3 { margin:0; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .t h3 span { margin-left:auto; font-weight:400; font-size:13px; color:var(--suave); }
   .t .ayuda { margin:2px 0 12px; font-size:12.5px; color:var(--suave); }
@@ -122,17 +134,18 @@
   <h1>Tablero<small id="fecha">Cargando…</small></h1>
   <button class="btn" id="recargar" type="button">Actualizar</button>
 </header></div>
-<nav aria-label="Ir a"><div class="ancho">
-  <button type="button" data-ir="p-resumen">Resumen</button>
-  <button type="button" data-ir="p-fijos" id="ir-fijos" hidden>Cuentas del mes</button>
-  <button type="button" data-ir="p-plata">Mi plata</button>
-  <button type="button" data-ir="p-sentry">SENTRY-CODE</button>
-  <button type="button" data-ir="p-ventas">Ventas</button>
-  <button type="button" data-ir="p-mov">Movimientos</button>
+<div class="ancho caja">
+<nav aria-label="Secciones del tablero"><div class="menu" role="tablist">
+  <button type="button" role="tab" data-ver="resumen" aria-selected="true"><i style="--c:var(--verde)"></i>Resumen</button>
+  <button type="button" role="tab" data-ver="plata" aria-selected="false"><i style="--c:var(--azul)"></i>Mi plata</button>
+  <button type="button" role="tab" data-ver="sentry" aria-selected="false"><i style="--c:var(--ambar)"></i>SENTRY-CODE</button>
+  <button type="button" role="tab" data-ver="ventas" aria-selected="false"><i style="--c:var(--violeta)"></i>Ventas</button>
+  <button type="button" role="tab" data-ver="mov" aria-selected="false"><i style="--c:var(--rojo)"></i>Movimientos</button>
 </div></nav>
 
-<main id="main" class="ancho">
+<main id="main">
   <div id="aviso" role="alert"></div>
+  <div class="panel" data-panel="resumen">
 
   <div class="parte" id="p-resumen"><span class="n">1</span><div><h2>Resumen</h2><p>Lo más importante de un vistazo. Abajo está el detalle de cada cosa.</p></div></div>
   <section class="t resumen"><h3>En pocas palabras</h3><ul id="resumen"><li>Cargando…</li></ul></section>
@@ -144,6 +157,8 @@
   <div class="parte" id="p-fijos" hidden><span class="n" style="--c:var(--rojo)">$</span><div><h2>Cuentas del mes</h2><p>Lo que paga todos los meses. Se marca solo cuando se lo anota al bot, por ejemplo «pagué luz 32000».</p></div></div>
   <section class="t" id="t-fijos" hidden><div class="fijos-tot" id="fijos-tot"></div><div class="meta" id="fijos-barra"></div><div id="fijos"></div></section>
 
+  </div>
+  <div class="panel" data-panel="plata" hidden>
   <div class="parte" id="p-plata"><span class="n">2</span><div><h2>Mi plata</h2><p>Saldos de sus cuentas y lo que le anota al bot de gastos.</p></div></div>
   <section class="t c"><h3>Cuentas</h3><p class="ayuda">Último saldo que le anotó al bot en cada una.</p><div id="cuentas"></div></section>
   <section class="t g"><h3>Gasto por día <span>últimos 30 días</span></h3><p class="ayuda">Cada barra es un día. Mientras más alta, más gastó.</p>
@@ -155,17 +170,25 @@
     <p class="ayuda">Gastos del mes por categoría, de mayor a menor.</p><div id="cats"></div></section>
   <section class="t m"><h3>Negocio este mes</h3><p class="ayuda">Lo que le anotó al bot como «negocio» y su avance hacia la meta.</p><div id="negocio"></div></section>
 
+  </div>
+  <div class="panel" data-panel="sentry" hidden>
   <div class="parte" id="p-sentry" style="--c:var(--ambar)"><span class="n" style="--c:var(--ambar)">3</span><div><h2>SENTRY-CODE</h2><p>Lo que ha ganado con clientes desde el inicio y lo que todavía le deben, según el CRM.</p></div></div>
   <section class="t b"><h3>Ganancia real <span>desde el inicio</span></h3><p class="ayuda">Lo cobrado menos lo gastado en dominios, correo y placas.</p><div id="sentry"></div></section>
   <section class="t a"><h3>Por cobrar</h3><p class="ayuda">Quién le debe, cuánto y de qué. En rojo lo que ya pasó su fecha.</p><div id="cobrar"></div></section>
 
+  </div>
+  <div class="panel" data-panel="ventas" hidden>
   <div class="parte" id="p-ventas"><span class="n" style="--c:var(--azul)">4</span><div><h2>Ventas</h2><p>Cómo van los negocios a los que les mandó una demo.</p></div></div>
   <section class="t m"><h3>Negocios por etapa <span id="leads-al"></span></h3><p class="ayuda">De arriba hacia abajo: desde la demo armada hasta el cliente.</p><div id="leads"></div><div id="proximos"></div></section>
   <section class="t m"><h3>Quién abrió su demo</h3><p class="ayuda">Aperturas reales de cada demo en los últimos 30 días.</p><div id="visitas"></div></section>
 
+  </div>
+  <div class="panel" data-panel="mov" hidden>
   <div class="parte" id="p-mov"><span class="n" style="--c:var(--violeta)">5</span><div><h2>Movimientos</h2><p>Lo último que le anotó al bot.</p></div></div>
   <section class="t"><div id="ultimos"></div></section>
+  </div>
 </main>
+</div>
 
 <script>
 const DIRECCION = 'https://n8n-production-003b9.up.railway.app/webhook/tablero';
@@ -344,7 +367,7 @@ const fijosDe = (d, deuda) => (d.fijos || []).map(f => { const monto = f.monto =
 function falta(d, deuda) { const p = fijosDe(d, deuda).filter(f => !f.variable && !f.listo); return { n: p.length, monto: p.reduce((s, f) => s + Math.max(0, (f.monto || 0) - f.pagado), 0) }; }
 function pintarFijos(d, disp, deuda) {
   const l = fijosDe(d, deuda), hay = l.length > 0;
-  ['#p-fijos', '#t-fijos', '#ir-fijos'].forEach(s => { $(s).hidden = !hay; }); if (!hay) return;
+  ['#p-fijos', '#t-fijos'].forEach(s => { $(s).hidden = !hay; }); if (!hay) return;
   const cuentas = l.filter(f => !f.variable), total = cuentas.reduce((s, f) => s + (f.monto || f.pagado), 0), pagado = cuentas.reduce((s, f) => s + f.pagado, 0), f = falta(d, deuda), sinMonto = cuentas.filter(x => !x.monto && !x.pagado).length;
   $('#fijos-tot').innerHTML = '<div>Total del mes<b>' + plata(total) + '</b></div><div>Ya pagado<b class="verde">' + plata(pagado) + '</b></div><div>Falta pagar<b class="' + (f.monto ? 'rojo' : 'verde') + '">' + plata(f.monto) + '</b></div>';
   const a = total ? Math.min(100, 100 * pagado / total) : 0; $('#fijos-barra').innerHTML = '<i class="c1" style="width:' + a.toFixed(1) + '%"></i>'; $('#fijos-barra').setAttribute('role', 'img'); $('#fijos-barra').setAttribute('aria-label', 'Pagado ' + plata(pagado) + ' de ' + plata(total));
@@ -399,7 +422,17 @@ document.querySelectorAll('.pest button').forEach(b => b.addEventListener('click
   ambito = b.dataset.amb; document.querySelectorAll('.pest button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (datos) pintarCategorias();
 }));
 /* El menú lleva a cada parte sin cambiar la dirección (la clave también viaja después del #). */
-document.querySelectorAll('nav [data-ir]').forEach(b => b.addEventListener('click', () => document.getElementById(b.dataset.ir).scrollIntoView({ behavior: 'smooth', block: 'start' })));
+/* Pestañas: muestra una sección a la vez y recuerda la última que abrió en este aparato. */
+function verPanel(v, mover) {
+  if (!document.querySelector('[data-panel="' + v + '"]')) v = 'resumen';
+  document.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== v; });
+  document.querySelectorAll('nav [data-ver]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ver === v)));
+  try { localStorage.setItem('tablero-panel', v); } catch {}
+  if (mover) window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+document.querySelectorAll('nav [data-ver]').forEach(b => b.addEventListener('click', () => verPanel(b.dataset.ver, true)));
+let panelInicial = 'resumen'; try { panelInicial = localStorage.getItem('tablero-panel') || 'resumen'; } catch {}
+verPanel(panelInicial, false);
 $('#recargar').addEventListener('click', cargar);
 cargar();
 </script>
