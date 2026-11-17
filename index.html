@@ -367,7 +367,7 @@ function pintar() {
 /* Todos los gastos del mes, separados en necesarios, no necesarios y por revisar. La separación es por palabras del concepto
    (criterio acordado con Agustín el 16-11-2026; los «sin detalle» cuentan como no necesarios); lo que no calza con nada queda «por revisar». Sin el campo «mes_gastos»
    (flujo antiguo de n8n) la sección queda oculta. */
-const NO_NECESARIO = /perfum|salida|carrete|\bbar\b|copete|cerveza|trago|ropa|zapatill|polera|juego|antojo|helado|regalo|capricho|tabaco|cigarr|vape|uber|didi|cabify|taxi|sin detalle/i;
+const NO_NECESARIO = /perfum|salida|carrete|\bbar\b|copete|cerveza|trago|ropa|zapatill|polera|juego|antojo|helado|regalo|capricho|tabaco|cigarr|vape|uber|didi|cabify|taxi|sin detalle|\bdisco|discoteca|fiesta/i;
 const NECESARIO = /deporte|gimnasio|\bgym\b|universidad|arancel|matr[ií]cula|plan|entel|celular|internet|\bluz\b|enel|\bagua\b|\bgas\b|arriendo|gastos? comun|pan\b|huevo|leche|super|almac[eé]n|feria|verdura|remedio|farmacia|m[eé]dic|dentista|claude|dominio|hosting|publicidad|corte de pelo|micro|metro|\bbip\b|bencina|cuota|tarjeta/i;
 function claseGasto(g) {
   const c = String(g.concepto || '');
