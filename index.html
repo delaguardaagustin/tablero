@@ -105,6 +105,8 @@
   .pill.rojo { background:color-mix(in srgb, var(--rojo) 18%, transparent); color:var(--rojo); }
   .pill.ambar { background:color-mix(in srgb, var(--ambar) 18%, transparent); color:var(--ambar); }
   .pill.verde { background:color-mix(in srgb, var(--verde) 16%, transparent); color:var(--verde); }
+.gmes-h { margin:16px 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--suave); }
+#gmes-tot { margin-bottom:6px; }
 
   .fijos-tot { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
   .fijos-tot div { background:var(--hundido); border:1px solid var(--linea); border-radius:10px; padding:10px 8px; font-size:12.5px; color:var(--suave); min-width:0; }
@@ -186,6 +188,8 @@
   <div class="panel" data-panel="mov" hidden>
   <div class="parte" id="p-mov"><span class="n" style="--c:var(--violeta)">5</span><div><h2>Movimientos</h2><p>Lo último que le anotó al bot.</p></div></div>
   <section class="t"><div id="ultimos"></div></section>
+  <div class="parte" id="p-gmes" hidden><span class="n" style="--c:var(--rojo)">6</span><div><h2>Gastos de este mes</h2><p>Todos los gastos del mes, separados en necesarios, no necesarios y por revisar. Los no necesarios se recuperan.</p></div></div>
+  <section class="t" id="t-gmes" hidden><div id="gmes-tot"></div><div id="gmes"></div></section>
   </div>
 </main>
 </div>
@@ -357,6 +361,32 @@ function pintar() {
   $('#ultimos').innerHTML = (d.ultimos || []).length ? recortar(d.ultimos.map(m => { const s = SIGNO[m.tipo] || ['', m.tipo, '']; return '<div class="par"><span>' + esc(m.concepto) +
     '<small>' + corta(m.fecha) + ' · ' + esc(m.ambito) + (m.tipo === 'gasto' ? ' · ' + esc(m.categoria) : '') + (m.cuenta ? ' · ' + esc(CUENTAS[m.cuenta] || m.cuenta) : '') + '</small></span>' +
     '<em><span class="chip ' + s[0] + '">' + s[1] + '</span> ' + s[2] + plata(m.monto) + '</em></div>'; }), 8, 'movimientos') : '<p class="vacio">Todavía no hay movimientos. Escríbale al bot «gasté 2100 en almuerzo».</p>';
+  pintarGastosMes(d);
+}
+
+/* Todos los gastos del mes, separados en necesarios, no necesarios y por revisar. La separación es por palabras del concepto
+   (criterio acordado con Agustín el 16-11-2026); lo que no calza con nada queda «por revisar». Sin el campo «mes_gastos»
+   (flujo antiguo de n8n) la sección queda oculta. */
+const NO_NECESARIO = /perfum|salida|carrete|\bbar\b|copete|cerveza|trago|ropa|zapatill|polera|juego|antojo|helado|regalo|capricho|tabaco|cigarr|vape/i;
+const NECESARIO = /universidad|arancel|matr[ií]cula|plan|entel|celular|internet|\bluz\b|enel|\bagua\b|\bgas\b|arriendo|gastos? comun|pan\b|huevo|leche|super|almac[eé]n|feria|verdura|remedio|farmacia|m[eé]dic|dentista|claude|dominio|hosting|publicidad|corte de pelo|micro|metro|\bbip\b|bencina|cuota|tarjeta/i;
+function claseGasto(g) {
+  const c = String(g.concepto || '');
+  if (NO_NECESARIO.test(c)) return 'no';
+  if (NECESARIO.test(c) || ['herramientas', 'publicidad', 'cuentas'].includes(g.categoria) || (g.categoria === 'comida' && !/salida|restor|delivery/i.test(c))) return 'si';
+  return 'revisar';
+}
+function pintarGastosMes(d) {
+  const lista = d.mes_gastos, sec = $('#t-gmes'), par = $('#p-gmes');
+  if (!Array.isArray(lista)) { sec.hidden = true; par.hidden = true; return; }
+  sec.hidden = false; par.hidden = false;
+  const G = { si: ['Necesarios', 'verde'], no: ['No necesarios (a recuperar)', 'rojo'], revisar: ['Por revisar', 'ambar'] };
+  const grupos = { si: [], no: [], revisar: [] };
+  lista.forEach(g => grupos[claseGasto(g)].push(g));
+  const total = k => grupos[k].reduce((s, g) => s + Number(g.monto || 0), 0);
+  $('#gmes-tot').innerHTML = Object.keys(G).map(k => '<div class="par"><span>' + G[k][0] + '<small>' + grupos[k].length + (grupos[k].length === 1 ? ' gasto' : ' gastos') + '</small></span><em><span class="pill ' + G[k][1] + '">' + plata(total(k)) + '</span></em></div>').join('');
+  $('#gmes').innerHTML = lista.length ? Object.keys(G).filter(k => grupos[k].length).map(k => '<h4 class="gmes-h">' + G[k][0] + '</h4>' +
+    grupos[k].map(g => '<div class="par"><span>' + esc(g.concepto) + '<small>' + corta(g.fecha) + ' · ' + esc(g.ambito) + ' · ' + esc(g.categoria) + '</small></span><em>-' + plata(g.monto) + '</em></div>').join('')).join('')
+    : '<p class="vacio">Todavía no hay gastos este mes.</p>';
 }
 
 /* Cuentas fijas del mes. La lista y los montos vienen del flujo privado de n8n (este repositorio es público). Una cuenta está pagada
