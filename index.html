@@ -65,7 +65,7 @@
   /* cifras grandes */
   .kpi { grid-column:span 6; border-top:3px solid var(--c, var(--linea)); }
   .kpi h3 { font-size:13px; font-weight:600; color:var(--suave); }
-  .kpi b { display:block; margin-top:6px; font-size:clamp(21px, 6vw, 30px); letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1; overflow-wrap:anywhere; }
+  .kpi b { display:block; margin-top:6px; font-size:clamp(19px, 5.4vw, 26px); letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1; white-space:nowrap; }
   .kpi p { margin:6px 0 0; font-size:12.5px; color:var(--suave); }
 
   /* gráfico por día */
@@ -155,28 +155,30 @@
   <section class="t kpi" style="--c:var(--rojo)"><h3>Gastado este mes</h3><b id="k-gasto">—</b><p id="k-gasto-p"></p></section>
   <section class="t kpi" style="--c:var(--azul)"><h3>Ganado este mes</h3><b id="k-gan">—</b><p id="k-gan-p"></p></section>
   <section class="t kpi" style="--c:var(--ambar)"><h3>Me deben</h3><b id="k-cob">—</b><p id="k-cob-p"></p></section>
-
-  <div class="parte" id="p-fijos" hidden><span class="n" style="--c:var(--rojo)">$</span><div><h2>Cuentas del mes</h2><p>Lo que paga todos los meses. Se marca solo cuando se lo anota al bot, por ejemplo «pagué luz 32000».</p></div></div>
-  <section class="t" id="t-fijos" hidden><div class="fijos-tot" id="fijos-tot"></div><div class="meta" id="fijos-barra"></div><div id="fijos"></div></section>
+  <section class="t" id="t-hoy" hidden><h3>Para hacer hoy</h3><p class="ayuda">Seguimientos de Ventas que vencen hoy o ya están atrasados.</p><div id="hoy"></div></section>
 
   </div>
   <div class="panel" data-panel="plata" hidden>
-  <div class="parte" id="p-plata"><span class="n">2</span><div><h2>Mi plata</h2><p>Saldos de sus cuentas y lo que le anota al bot de gastos.</p></div></div>
-  <section class="t c"><h3>Cuentas</h3><p class="ayuda">Último saldo que le anotó al bot en cada una.</p><div id="cuentas"></div></section>
+  <div class="parte" id="p-plata"><span class="n">2</span><div><h2>Mi plata</h2><p>Saldos, cuentas que paga cada mes y en qué se le va la plata. Todo sale de lo que le anota al bot.</p></div></div>
+  <section class="t c"><h3>Saldos</h3><p class="ayuda">Último saldo que le anotó al bot en cada cuenta.</p><div id="cuentas"></div></section>
   <section class="t g"><h3>Gasto por día <span>últimos 30 días</span></h3><p class="ayuda">Cada barra es un día. Mientras más alta, más gastó.</p>
     <div class="dias" id="dias" role="img" aria-label="Gasto por día"></div>
     <div class="eje"><span id="eje-a"></span><span class="ley"><span><i style="background:var(--verde)"></i>Personal</span><span><i style="background:var(--azul)"></i>Negocio</span><span><i style="background:var(--ambar)"></i>Hoy</span></span><span id="eje-b"></span></div>
   </section>
-  <section class="t m"><h3>En qué se fue este mes
+  <div class="parte" id="p-fijos" hidden><span class="n" style="--c:var(--rojo)">$</span><div><h2>Cuentas del mes</h2><p>Lo que paga todos los meses. Se marca solo cuando se lo anota al bot, por ejemplo «pagué luz 32000».</p></div></div>
+  <section class="t" id="t-fijos" hidden><div class="fijos-tot" id="fijos-tot"></div><div class="meta" id="fijos-barra"></div><div id="fijos"></div></section>
+  <div class="parte"><span class="n">$</span><div><h2>Gastos de este mes</h2><p>Por categoría, y cada gasto separado en necesarios, no necesarios y por revisar. Los no necesarios se recuperan.</p></div></div>
+  <section class="t m"><h3>Por categoría
     <span class="pest" role="group" aria-label="Ver gastos de"><button type="button" data-amb="personal" aria-pressed="true">Personal</button><button type="button" data-amb="negocio" aria-pressed="false">Negocio</button></span></h3>
-    <p class="ayuda">Gastos del mes por categoría, de mayor a menor.</p><div id="cats"></div></section>
-  <section class="t m"><h3>Negocio este mes</h3><p class="ayuda">Lo que le anotó al bot como «negocio» y su avance hacia la meta.</p><div id="negocio"></div></section>
+    <p class="ayuda">De mayor a menor.</p><div id="cats"></div></section>
+  <section class="t m" id="t-gmes" hidden><h3>Gasto por gasto</h3><p class="ayuda">Separado según si era necesario.</p><div id="gmes-tot"></div><div id="gmes"></div></section>
 
   </div>
   <div class="panel" data-panel="sentry" hidden>
-  <div class="parte" id="p-sentry" style="--c:var(--ambar)"><span class="n" style="--c:var(--ambar)">3</span><div><h2>SENTRY-CODE</h2><p>Lo que ha ganado con clientes desde el inicio y lo que todavía le deben, según el CRM.</p></div></div>
+  <div class="parte" id="p-sentry" style="--c:var(--ambar)"><span class="n" style="--c:var(--ambar)">3</span><div><h2>SENTRY-CODE</h2><p>Lo que ha ganado con clientes, lo que le deben y cómo va hacia la meta de ventas.</p></div></div>
   <section class="t b"><h3>Ganancia real <span>desde el inicio</span></h3><p class="ayuda">Lo cobrado menos lo gastado en dominios, correo y placas.</p><div id="sentry"></div></section>
   <section class="t a"><h3>Por cobrar</h3><p class="ayuda">Quién le debe, cuánto y de qué. En rojo lo que ya pasó su fecha.</p><div id="cobrar"></div></section>
+  <section class="t"><h3>Este mes y meta de ventas</h3><p class="ayuda">Lo que le anotó al bot como «negocio» este mes, y cuánto lleva vendido hacia la meta.</p><div id="negocio"></div></section>
 
   </div>
   <div class="panel" data-panel="ventas" hidden>
@@ -186,10 +188,8 @@
 
   </div>
   <div class="panel" data-panel="mov" hidden>
-  <div class="parte" id="p-mov"><span class="n" style="--c:var(--violeta)">5</span><div><h2>Movimientos</h2><p>Lo último que le anotó al bot.</p></div></div>
+  <div class="parte" id="p-mov"><span class="n" style="--c:var(--violeta)">5</span><div><h2>Movimientos</h2><p>Lo último que le anotó al bot, del más nuevo al más antiguo.</p></div></div>
   <section class="t"><div id="ultimos"></div></section>
-  <div class="parte" id="p-gmes" hidden><span class="n" style="--c:var(--rojo)">6</span><div><h2>Gastos de este mes</h2><p>Todos los gastos del mes, separados en necesarios, no necesarios y por revisar. Los no necesarios se recuperan.</p></div></div>
-  <section class="t" id="t-gmes" hidden><div id="gmes-tot"></div><div id="gmes"></div></section>
   </div>
 </main>
 </div>
@@ -333,6 +333,9 @@ function pintar() {
       (fuera ? '<div class="fila"><span style="color:var(--suave)">Descartados o perdidos</span><span class="barra"><i style="width:' + (100 * fuera / topeL).toFixed(0) + '%;background:var(--linea)"></i></span><em style="color:var(--suave)">' + fuera + '</em></div>' : '') +
       (alcanzados ? '<div class="explica" style="margin:12px 0 0">De ' + alcanzados + ' negocios que recibieron su demo, ' + (n('conversando') + n('propuesta')) + ' están conversando (' + Math.round(100 * (n('conversando') + n('propuesta')) / alcanzados) + ' %) y <b class="verde">' + n('cliente') + ' son clientes</b> (' + Math.round(100 * n('cliente') / alcanzados) + ' %).' + (n('nuevo') ? ' Hay ' + n('nuevo') + ' demos listas esperando ser enviadas.' : '') + '</div>' : '')
     : '<p class="vacio">No hay prospectos en la base.</p>';
+  const urg = prox.filter(p => p.fecha && p.fecha <= d.hoy);
+  $('#t-hoy').hidden = !urg.length;
+  $('#hoy').innerHTML = recortar(urg.map(p => '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em class="' + (p.fecha < d.hoy ? 'atr' : 'hoyp') + '">' + (p.fecha < d.hoy ? 'atrasado · ' + corta(p.fecha) : 'hoy') + '</em></div>'), 6, 'seguimientos');
   $('#proximos').innerHTML = prox.length ? '<p class="sub" style="margin-top:20px">Próximos seguimientos' + (atras ? ' · <span class="atr">' + atras + ' atrasado' + (atras === 1 ? '' : 's') + '</span>' : '') + '</p>' +
     prox.map(p => { const c = p.fecha < d.hoy ? 'atr' : p.fecha === d.hoy ? 'hoyp' : ''; return '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em class="' + c + '">' + (c === 'hoyp' ? 'hoy' : corta(p.fecha)) + '</em></div>'; }).join('') : '';
 
@@ -376,9 +379,9 @@ function claseGasto(g) {
   return 'revisar';
 }
 function pintarGastosMes(d) {
-  const lista = d.mes_gastos, sec = $('#t-gmes'), par = $('#p-gmes');
-  if (!Array.isArray(lista)) { sec.hidden = true; par.hidden = true; return; }
-  sec.hidden = false; par.hidden = false;
+  const lista = d.mes_gastos, sec = $('#t-gmes');
+  if (!Array.isArray(lista)) { sec.hidden = true; return; }
+  sec.hidden = false;
   const G = { si: ['Necesarios', 'verde'], no: ['No necesarios (a recuperar)', 'rojo'], revisar: ['Por revisar', 'ambar'] };
   const grupos = { si: [], no: [], revisar: [] };
   lista.forEach(g => grupos[claseGasto(g)].push(g));
@@ -439,7 +442,7 @@ function metaVentas(crm) {
   return '<p class="sub" style="margin-top:20px">Meta de ventas: ' + plata(META) + '</p><div class="meta" role="img" aria-label="Vendido ' + plata(tot) + ' de ' + plata(META) + '"><i class="c1" style="width:' + a.toFixed(1) + '%"></i><i class="c2" style="width:' + b.toFixed(1) + '%"></i></div>' +
     '<div class="ley" style="margin-bottom:4px"><span><i style="background:var(--verde)"></i>Cobrado</span><span><i style="background:var(--ambar);opacity:.75"></i>Por cobrar</span></div>' +
     '<div class="par"><span>Vendido en total<small>cobrado ' + plata(cob) + ' · por cobrar ' + plata(pend) + '</small></span><em>' + Math.round(100 * tot / META) + ' %</em></div>' +
-    (tot < META ? '<p class="nota">Faltan ' + plata(META - tot) + ' (unas ' + Math.ceil((META - tot) / 120000) + ' páginas de $120.000).</p>' : '<p class="nota verde">¡Meta cumplida!</p>');
+    (tot < META ? '<p class="nota">Faltan ' + plata(META - tot) + ' (unas ' + Math.ceil((META - tot) / 80000) + ' páginas de $80.000).</p>' : '<p class="nota verde">¡Meta cumplida!</p>');
 }
 
 function pintarCategorias() {
