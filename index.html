@@ -7,128 +7,152 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0b1114">
 <title>Tablero</title>
+<link rel="icon" href="data:,">
 <style>
-  :root { --fondo:#0b1114; --tarjeta:#121b20; --tarjeta2:#182329; --hundido:#0e161a; --linea:#22323a; --tinta:#eef3f5; --suave:#9aacb3; --verde:#2dd4bf; --ambar:#f5b454; --rojo:#fb8585; --azul:#6cb0fb; --violeta:#b69cff; color-scheme:dark; }
+  :root { --fondo:#0b1114; --tarjeta:#121b20; --tarjeta2:#182329; --hundido:#0e161a; --linea:#22323a; --tinta:#eef3f5; --suave:#9aacb3; --verde:#2dd4bf; --ambar:#f5b454; --rojo:#fb8585; --azul:#6cb0fb; --violeta:#b69cff; --barra-h:64px; color-scheme:dark; }
   * { box-sizing:border-box; }
-  html { scroll-behavior:smooth; scroll-padding-top:64px; }
-  body { margin:0; background:var(--fondo); color:var(--tinta); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; }
+  body { margin:0; background:var(--fondo); color:var(--tinta); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums; }
+  ::selection { background:color-mix(in srgb, var(--verde) 35%, transparent); color:var(--tinta); }
+  :focus-visible { outline:2px solid var(--verde); outline-offset:2px; border-radius:6px; }
   button { font:inherit; color:inherit; cursor:pointer; }
   .ancho { max-width:1180px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
 
-  /* cabecera y menú de secciones */
-  header { padding-block:20px 12px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--linea); }
-  h1 { margin:0; font-size:24px; letter-spacing:-.02em; flex:1; line-height:1.2; }
+  /* cabecera */
+  header { padding-block:max(16px, env(safe-area-inset-top, 0px)) 14px; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--linea); }
+  h1 { margin:0; font-size:22px; letter-spacing:-.02em; flex:1; line-height:1.2; min-width:0; }
   h1 small { display:block; font-size:13px; font-weight:400; color:var(--suave); margin-top:3px; letter-spacing:0; }
-  .btn { min-height:44px; padding:0 16px; border:1px solid var(--linea); border-radius:10px; background:var(--tarjeta2); font-weight:600; }
+  .btn { min-height:44px; padding:0 16px; border:1px solid var(--linea); border-radius:10px; background:var(--tarjeta2); font-weight:600; transition:border-color .15s; }
   .btn:hover { border-color:var(--verde); } .btn:disabled { opacity:.6; cursor:wait; }
-  nav { position:sticky; top:0; z-index:5; background:color-mix(in srgb, var(--fondo) 94%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--linea); padding-top:env(safe-area-inset-top, 0px); }
-  .menu { display:flex; gap:4px; overflow-x:auto; padding-block:8px; scrollbar-width:none; }
-  .menu::-webkit-scrollbar { display:none; }
-  nav button { flex:none; display:flex; align-items:center; gap:8px; min-height:40px; padding:0 14px; border:0; border-radius:10px; background:transparent; font-size:14px; font-weight:600; color:var(--suave); white-space:nowrap; text-align:left; }
-  nav button i { width:8px; height:8px; border-radius:50%; background:var(--c); opacity:.5; flex:none; }
-  nav button:hover, nav button:focus-visible { color:var(--tinta); background:var(--tarjeta); }
-  nav button[aria-selected="true"] { color:var(--tinta); background:var(--tarjeta2); box-shadow:inset 0 0 0 1px var(--linea); }
-  nav button[aria-selected="true"] i { opacity:1; }
 
-  main { padding-block:16px 64px; display:grid; gap:14px; grid-template-columns:repeat(12, minmax(0, 1fr)); align-content:start; min-width:0; }
+  /* menú: barra fija abajo en el teléfono, columna a la izquierda en el computador */
+  nav { position:fixed; z-index:5; left:0; right:0; bottom:0; background:var(--tarjeta); border-top:1px solid var(--linea); padding:0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+  .menu { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); max-width:560px; margin:0 auto; }
+  nav button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:var(--barra-h); padding:6px 2px; border:0; background:transparent; font-size:11.5px; font-weight:600; color:var(--suave); white-space:nowrap; min-width:0; transition:color .15s; }
+  nav button svg { width:22px; height:22px; flex:none; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  nav button:hover { color:var(--tinta); }
+  nav button[aria-selected="true"] { color:var(--tinta); }
+  nav button[aria-selected="true"] svg { color:var(--verde); }
+  nav .largo { display:none; }
+  @media (max-width:359px) { nav button { font-size:10.5px; } }
+
+  main { padding-block:16px calc(var(--barra-h) + 32px + env(safe-area-inset-bottom, 0px)); display:grid; gap:12px; grid-template-columns:repeat(12, minmax(0, 1fr)); align-content:start; min-width:0; }
   main > * { grid-column:span 12; min-width:0; }
   .panel { display:contents; } .panel[hidden] { display:none; }
   .panel > * { grid-column:span 12; min-width:0; }
+  .panel > h2 { margin:4px 0 0; font-size:20px; letter-spacing:-.01em; line-height:1.25; }
+
   @media (min-width:1000px) {
     .caja { display:grid; grid-template-columns:200px minmax(0, 1fr); gap:28px; align-items:start; }
-    nav { top:16px; margin-top:16px; padding:8px; border:1px solid var(--linea); border-radius:14px; background:var(--tarjeta); backdrop-filter:none; -webkit-backdrop-filter:none; }
-    .menu { flex-direction:column; overflow:visible; padding:0; }
-    nav button { width:100%; }
+    nav { position:sticky; top:16px; left:auto; right:auto; bottom:auto; margin-top:16px; padding:8px; border:1px solid var(--linea); border-radius:14px; }
+    .menu { display:flex; flex-direction:column; gap:2px; max-width:none; }
+    nav button { flex-direction:row; justify-content:flex-start; gap:10px; width:100%; min-height:44px; padding:0 12px; border-radius:10px; font-size:14px; }
+    nav button svg { width:19px; height:19px; }
+    nav button:hover { background:var(--tarjeta2); }
+    nav button[aria-selected="true"] { background:var(--tarjeta2); box-shadow:inset 0 0 0 1px var(--linea); }
+    nav .largo { display:inline; } nav .corto { display:none; }
+    main { padding-block:16px 64px; gap:16px; }
   }
 
-  /* encabezado de cada parte */
-  .parte { display:flex; gap:12px; align-items:flex-start; margin-top:4px; padding-bottom:2px; }
-  .parte .n { display:none !important; }
-  #p-fijos { margin-top:20px; }
-  .parte .n { flex:none; width:30px; height:30px; border-radius:9px; display:grid; place-items:center; font-weight:700; font-size:14px; background:var(--tarjeta2); border:1px solid var(--linea); color:var(--c, var(--verde)); }
-  .parte h2 { margin:0; font-size:19px; letter-spacing:-.01em; line-height:1.3; text-wrap:balance; }
-  .parte p { margin:2px 0 0; font-size:13px; color:var(--suave); max-width:62ch; }
-
   /* tarjetas */
-  .t { background:var(--tarjeta); border:1px solid var(--linea); border-radius:14px; padding:18px; }
-  .t h3 { margin:0; font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .t h3 span { margin-left:auto; font-weight:400; font-size:13px; color:var(--suave); }
-  .t .ayuda { margin:2px 0 12px; font-size:12.5px; color:var(--suave); }
+  .t { background:var(--tarjeta); border:1px solid var(--linea); border-radius:14px; padding:16px; }
+  .t[hidden] { display:none; }
+  .t h3 { margin:0 0 10px; font-size:16px; font-weight:700; line-height:1.3; display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-height:24px; }
+  .t h3 > span { margin-left:auto; font-weight:400; font-size:13px; color:var(--suave); }
+  .t .ayuda { margin:-6px 0 10px; font-size:13px; color:var(--suave); }
 
-  /* en pocas palabras */
-  .resumen { background:linear-gradient(160deg, var(--tarjeta2), var(--tarjeta)); }
-  .resumen ul { list-style:none; margin:10px 0 0; padding:0; display:grid; gap:10px; }
-  .resumen li { display:flex; gap:10px; align-items:baseline; font-size:15.5px; line-height:1.45; }
-  .resumen li::before { content:""; flex:none; width:8px; height:8px; border-radius:50%; background:var(--c, var(--suave)); transform:translateY(-1px); }
-  .resumen b { font-variant-numeric:tabular-nums; white-space:nowrap; }
+  /* cifras principales: una lista en el teléfono, cuatro columnas en el computador */
+  .cifras { padding-block:4px; }
+  .cifra { display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:12px; align-items:baseline; padding:12px 0; }
+  .cifra + .cifra { border-top:1px solid var(--linea); }
+  .cifra h3 { margin:0; font-size:14px; font-weight:600; color:var(--suave); min-height:0; }
+  .cifra b { font-size:22px; letter-spacing:-.02em; line-height:1.15; white-space:nowrap; }
+  .cifra p { grid-column:1 / -1; margin:3px 0 0; font-size:12.5px; color:var(--suave); }
 
-  /* cifras grandes */
-  .kpi { grid-column:span 6; border-top:3px solid var(--c, var(--linea)); }
-  .kpi h3 { font-size:13px; font-weight:600; color:var(--suave); }
-  .kpi b { display:block; margin-top:6px; font-size:clamp(19px, 5.4vw, 26px); letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1; white-space:nowrap; }
-  .kpi p { margin:6px 0 0; font-size:12.5px; color:var(--suave); }
+  /* para tener en cuenta */
+  .avisos ul { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+  .avisos li { display:flex; gap:10px; align-items:baseline; font-size:15px; line-height:1.45; }
+  .avisos li::before { content:""; flex:none; width:8px; height:8px; border-radius:50%; background:var(--c, var(--suave)); transform:translateY(-1px); }
+  .avisos b { white-space:nowrap; }
 
   /* gráfico por día */
-  .dias { display:flex; align-items:flex-end; gap:3px; height:150px; padding:6px 0 0; border-bottom:1px solid var(--linea); }
+  .dias { display:flex; align-items:flex-end; gap:3px; height:140px; padding:6px 0 0; border-bottom:1px solid var(--linea); }
   .dias .d { flex:1; min-width:0; display:flex; flex-direction:column-reverse; height:100%; position:relative; }
   .dias .d i { display:block; min-height:0; }
   .dias .d .p { background:var(--verde); border-radius:0 0 1px 1px; } .dias .d .n { background:var(--azul); border-radius:3px 3px 0 0; }
   .dias .d.hoy::after { content:""; position:absolute; left:0; right:0; bottom:-7px; height:3px; border-radius:2px; background:var(--ambar); }
-  .g { display:flex; flex-direction:column; } .g .dias { flex:1; height:auto; min-height:150px; }
-  .eje { display:flex; justify-content:space-between; gap:10px; margin-top:12px; font-size:12px; color:var(--suave); flex-wrap:wrap; }
+  .eje { display:flex; justify-content:space-between; gap:6px 10px; margin-top:12px; font-size:12px; color:var(--suave); flex-wrap:wrap; }
   .ley { display:flex; gap:14px; font-size:12px; color:var(--suave); flex-wrap:wrap; }
   .ley i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
 
   /* filas */
-  .fila { display:grid; grid-template-columns:minmax(90px, 34%) 1fr auto; gap:10px; align-items:center; padding:8px 0; font-size:14px; }
+  .fila { display:grid; grid-template-columns:minmax(90px, 36%) 1fr auto; gap:10px; align-items:center; padding:9px 0; font-size:14px; }
   .fila + .fila { border-top:1px solid var(--linea); }
   .fila .barra { height:8px; border-radius:4px; background:var(--hundido); overflow:hidden; }
   .fila .barra i { display:block; height:100%; border-radius:4px; background:var(--verde); }
-  .fila em { font-style:normal; font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; }
-  .par { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:9px 0; font-size:14px; }
+  .fila em { font-style:normal; white-space:nowrap; font-weight:600; }
+  .par { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:10px 0; font-size:14.5px; }
   .par + .par { border-top:1px solid var(--linea); }
   .par > span { min-width:0; overflow-wrap:anywhere; }
-  .par em { font-style:normal; font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:600; text-align:right; }
-  .par small { display:block; color:var(--suave); font-size:12px; font-weight:400; margin-top:1px; }
-  .total { border-top:2px solid var(--linea) !important; font-weight:700; }
-  .grande em { font-size:18px; }
+  .par em { font-style:normal; white-space:nowrap; font-weight:600; text-align:right; }
+  .par small { display:block; color:var(--suave); font-size:12.5px; font-weight:400; margin-top:1px; }
+  .total { border-top:1px solid var(--suave) !important; font-weight:700; }
+  .grande em { font-size:19px; }
   .vacio { color:var(--suave); font-size:14px; margin:4px 0; }
-  .nota { color:var(--suave); font-size:12.5px; margin:10px 0 0; }
-  .sub { margin:18px 0 6px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--suave); }
+  .nota { color:var(--suave); font-size:13px; margin:12px 0 0; }
+  .sub { margin:20px 0 4px; font-size:13px; font-weight:700; color:var(--suave); }
   .sub:first-child { margin-top:0; }
-  .explica { background:var(--hundido); border:1px solid var(--linea); border-radius:10px; padding:10px 12px; font-size:13.5px; line-height:1.5; margin:0 0 12px; }
+  .explica { font-size:14.5px; line-height:1.5; margin:0 0 12px; }
 
   /* bloques de cliente en «por cobrar» */
-  .cli { border:1px solid var(--linea); border-radius:12px; padding:4px 12px; margin-bottom:10px; background:var(--hundido); }
+  .cli { margin-top:4px; }
+  .cli + .cli { margin-top:12px; }
   .cli .par:first-child { font-weight:700; font-size:15px; }
-  .pill { display:inline-block; padding:1px 8px; border-radius:20px; font-size:11.5px; font-weight:700; margin-right:4px; }
+  .cli .par:not(:first-child) { padding-left:12px; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:20px; font-size:12px; font-weight:700; margin-right:6px; }
   .pill.rojo { background:color-mix(in srgb, var(--rojo) 18%, transparent); color:var(--rojo); }
   .pill.ambar { background:color-mix(in srgb, var(--ambar) 18%, transparent); color:var(--ambar); }
   .pill.verde { background:color-mix(in srgb, var(--verde) 16%, transparent); color:var(--verde); }
-.gmes-h { margin:16px 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--suave); }
-#gmes-tot { margin-bottom:6px; }
+  .gmes-h { margin:16px 0 2px; font-size:13px; font-weight:700; color:var(--suave); }
 
-  .fijos-tot { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
-  .fijos-tot div { background:var(--hundido); border:1px solid var(--linea); border-radius:10px; padding:10px 8px; font-size:12.5px; color:var(--suave); min-width:0; }
-  .fijos-tot b { display:block; font-size:clamp(14px, 3.9vw, 21px); color:var(--tinta); font-variant-numeric:tabular-nums; white-space:nowrap; }
-  .pest { display:inline-flex; margin-left:auto; border:1px solid var(--linea); border-radius:9px; overflow:hidden; }
-  .pest button { min-height:36px; padding:0 12px; border:0; background:transparent; font-size:13px; color:var(--suave); }
+  /* cuentas del mes: tres cifras en línea, sin cajas */
+  .fijos-tot { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); font-size:12.5px; color:var(--suave); }
+  .fijos-tot div { min-width:0; padding-right:8px; }
+  .fijos-tot div + div { border-left:1px solid var(--linea); padding-left:12px; }
+  .fijos-tot b { display:block; margin-top:2px; font-size:clamp(15px, 4.4vw, 20px); color:var(--tinta); white-space:nowrap; }
+  .pest { display:inline-flex; margin-left:auto; border:1px solid var(--linea); border-radius:10px; overflow:hidden; }
+  .pest button { min-height:44px; padding:0 14px; border:0; background:transparent; font-size:13px; color:var(--suave); }
   .pest button[aria-pressed="true"] { background:var(--tarjeta2); color:var(--tinta); font-weight:600; }
   .chip { display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; background:var(--tarjeta2); color:var(--suave); font-weight:600; }
   .chip.g { color:var(--rojo); } .chip.i { color:var(--verde); } .chip.c { color:var(--ambar); }
-  .meta { height:12px; border-radius:6px; background:var(--hundido); overflow:hidden; margin:10px 0 6px; display:flex; }
+  .meta { height:12px; border-radius:6px; background:var(--hundido); overflow:hidden; margin:12px 0 8px; display:flex; }
   .meta i { display:block; height:100%; } .meta .c1 { background:var(--verde); } .meta .c2 { background:var(--ambar); opacity:.75; }
-  .mas { margin-top:10px; width:100%; min-height:40px; border:1px dashed var(--linea); border-radius:10px; background:transparent; color:var(--suave); font-size:13px; font-weight:600; }
-  .mas:hover { color:var(--tinta); border-color:var(--suave); }
+  .mas, .plegable summary { margin-top:10px; width:100%; min-height:44px; border:1px dashed var(--linea); border-radius:10px; background:transparent; color:var(--suave); font-size:13.5px; font-weight:600; transition:color .15s, border-color .15s; }
+  .mas:hover, .plegable summary:hover { color:var(--tinta); border-color:var(--suave); }
+  .plegable summary { display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; list-style:none; }
+  .plegable summary::-webkit-details-marker { display:none; }
+  .plegable summary svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
+  .plegable[open] summary svg { transform:rotate(180deg); }
+  .plegable[open] summary { margin-bottom:4px; }
   .atr { color:var(--rojo) !important; } .hoyp { color:var(--ambar) !important; }
   .verde { color:var(--verde); } .ambar { color:var(--ambar); } .rojo { color:var(--rojo); }
   #aviso { padding:14px 16px; border-radius:12px; background:#2a1d10; border:1px solid #5a3d14; color:#f8d9a0; display:none; }
   #aviso input { width:100%; min-height:44px; margin:10px 0; padding:0 12px; border-radius:9px; border:1px solid #5a3d14; background:#1a1209; color:inherit; font:inherit; }
 
   @media (min-width:760px) {
-    .kpi { grid-column:span 3; } .m { grid-column:span 6; } .g { grid-column:span 8; } .c { grid-column:span 4; } .a { grid-column:span 7; } .b { grid-column:span 5; }
-    .parte h2 { font-size:21px; }
+    .t { padding:20px; }
+    .m { grid-column:span 6; } .c { grid-column:span 5; } .a { grid-column:span 7; }
+    #t-hoy[hidden] + .avisos { grid-column:span 12; }
+    .cifras { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); padding-block:18px; }
+    .cifra { display:block; padding:2px 16px; }
+    .cifra:first-child { padding-left:0; } .cifra:last-child { padding-right:0; }
+    .cifra + .cifra { border-top:0; border-left:1px solid var(--linea); }
+    .cifra b { display:block; margin-top:6px; font-size:clamp(20px, 2.2vw, 26px); }
+    .cifra p { margin-top:6px; }
+    .panel > h2 { font-size:22px; }
+    /* SENTRY-CODE en pantalla ancha: las dos tarjetas largas juntas arriba y las dos cortas abajo (en el teléfono manda el orden del HTML) */
+    [data-panel="sentry"] > h2 { order:1; } #s-gan { order:2; } #s-cob { order:3; } #t-meta { order:4; } #s-neg { order:5; }
   }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
 </style>
 </head>
 <body>
@@ -138,58 +162,62 @@
 </header></div>
 <div class="ancho caja">
 <nav aria-label="Secciones del tablero"><div class="menu" role="tablist">
-  <button type="button" role="tab" data-ver="resumen" aria-selected="true"><i style="--c:var(--verde)"></i>Resumen</button>
-  <button type="button" role="tab" data-ver="plata" aria-selected="false"><i style="--c:var(--azul)"></i>Mi plata</button>
-  <button type="button" role="tab" data-ver="sentry" aria-selected="false"><i style="--c:var(--ambar)"></i>SENTRY-CODE</button>
-  <button type="button" role="tab" data-ver="ventas" aria-selected="false"><i style="--c:var(--violeta)"></i>Ventas</button>
-  <button type="button" role="tab" data-ver="mov" aria-selected="false"><i style="--c:var(--rojo)"></i>Movimientos</button>
+  <button type="button" role="tab" data-ver="resumen" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>Resumen</button>
+  <button type="button" role="tab" data-ver="plata" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18M15.5 15h2.5"/></svg>Mi plata</button>
+  <button type="button" role="tab" data-ver="sentry" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12" rx="2.5"/><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5M3 13h18"/></svg><span class="largo">SENTRY-CODE</span><span class="corto">SENTRY</span></button>
+  <button type="button" role="tab" data-ver="ventas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 17.5l5.5-5.5 4 3.5 7-7.5"/><path d="M14.5 8h5.5v5.5"/></svg>Ventas</button>
+  <button type="button" role="tab" data-ver="mov" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11.5M9 12h11.5M9 17.5h11.5M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></svg>Movimientos</button>
 </div></nav>
 
 <main id="main">
   <div id="aviso" role="alert"></div>
+
   <div class="panel" data-panel="resumen">
-
-  <div class="parte" id="p-resumen"><span class="n">1</span><div><h2>Resumen</h2><p>Lo más importante de un vistazo. Abajo está el detalle de cada cosa.</p></div></div>
-  <section class="t resumen"><h3>En pocas palabras</h3><ul id="resumen"><li>Cargando…</li></ul></section>
-  <section class="t kpi" style="--c:var(--verde)"><h3>En mis cuentas</h3><b id="k-disp">—</b><p id="k-disp-p"></p></section>
-  <section class="t kpi" style="--c:var(--rojo)"><h3>Gastado este mes</h3><b id="k-gasto">—</b><p id="k-gasto-p"></p></section>
-  <section class="t kpi" style="--c:var(--azul)"><h3>Ganado este mes</h3><b id="k-gan">—</b><p id="k-gan-p"></p></section>
-  <section class="t kpi" style="--c:var(--ambar)"><h3>Me deben</h3><b id="k-cob">—</b><p id="k-cob-p"></p></section>
-  <section class="t" id="t-hoy" hidden><h3>Para hacer hoy</h3><p class="ayuda">Seguimientos de Ventas que vencen hoy o ya están atrasados.</p><div id="hoy"></div></section>
-
+  <h2 id="p-resumen">Resumen</h2>
+  <section class="t cifras" aria-label="Cifras principales">
+    <div class="cifra"><h3>En mis cuentas</h3><b id="k-disp">—</b><p id="k-disp-p"></p></div>
+    <div class="cifra"><h3>Gastado este mes</h3><b id="k-gasto">—</b><p id="k-gasto-p"></p></div>
+    <div class="cifra"><h3>Ganado este mes</h3><b id="k-gan">—</b><p id="k-gan-p"></p></div>
+    <div class="cifra"><h3>Me deben</h3><b id="k-cob">—</b><p id="k-cob-p"></p></div>
+  </section>
+  <section class="t m" id="t-hoy" hidden><h3>Para hacer hoy</h3><p class="ayuda">Seguimientos que vencen hoy o están atrasados.</p><div id="hoy"></div></section>
+  <section class="t m avisos"><h3>Para tener en cuenta</h3><ul id="resumen"><li>Cargando…</li></ul></section>
   </div>
+
   <div class="panel" data-panel="plata" hidden>
-  <div class="parte" id="p-plata"><span class="n">2</span><div><h2>Mi plata</h2><p>Saldos, cuentas que paga cada mes y en qué se le va la plata. Todo sale de lo que le anota al bot.</p></div></div>
-  <section class="t c"><h3>Saldos</h3><p class="ayuda">Último saldo que le anotó al bot en cada cuenta.</p><div id="cuentas"></div></section>
-  <section class="t g"><h3>Gasto por día <span>últimos 30 días</span></h3><p class="ayuda">Cada barra es un día. Mientras más alta, más gastó.</p>
+  <h2 id="p-plata">Mi plata</h2>
+  <section class="t c"><h3>Saldos <span id="saldos-al"></span></h3><div id="cuentas"></div></section>
+  <section class="t a" id="t-fijos" hidden><h3 id="p-fijos">Cuentas del mes</h3><p class="ayuda">Se marcan solas cuando le anota al bot, por ejemplo «pagué luz 32000».</p>
+    <div class="fijos-tot" id="fijos-tot"></div><div class="meta" id="fijos-barra"></div><div id="fijos"></div></section>
+  <section class="t m"><h3>En qué gastó este mes
+    <span class="pest" role="group" aria-label="Ver gastos de"><button type="button" data-amb="personal" aria-pressed="true">Personal</button><button type="button" data-amb="negocio" aria-pressed="false">Negocio</button></span></h3>
+    <div id="cats"></div></section>
+  <section class="t m" id="t-gmes" hidden><h3>¿Necesarios o no?</h3><p class="ayuda">Los no necesarios son plata que puede recuperar.</p><div id="gmes-tot"></div>
+    <details class="plegable"><summary><span id="gmes-n">Ver cada gasto</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary><div id="gmes"></div></details></section>
+  <section class="t"><h3>Gasto por día <span>últimos 30 días</span></h3>
     <div class="dias" id="dias" role="img" aria-label="Gasto por día"></div>
     <div class="eje"><span id="eje-a"></span><span class="ley"><span><i style="background:var(--verde)"></i>Personal</span><span><i style="background:var(--azul)"></i>Negocio</span><span><i style="background:var(--ambar)"></i>Hoy</span></span><span id="eje-b"></span></div>
   </section>
-  <div class="parte" id="p-fijos" hidden><span class="n" style="--c:var(--rojo)">$</span><div><h2>Cuentas del mes</h2><p>Lo que paga todos los meses. Se marca solo cuando se lo anota al bot, por ejemplo «pagué luz 32000».</p></div></div>
-  <section class="t" id="t-fijos" hidden><div class="fijos-tot" id="fijos-tot"></div><div class="meta" id="fijos-barra"></div><div id="fijos"></div></section>
-  <div class="parte"><span class="n">$</span><div><h2>Gastos de este mes</h2><p>Por categoría, y cada gasto separado en necesarios, no necesarios y por revisar. Los no necesarios se recuperan.</p></div></div>
-  <section class="t m"><h3>Por categoría
-    <span class="pest" role="group" aria-label="Ver gastos de"><button type="button" data-amb="personal" aria-pressed="true">Personal</button><button type="button" data-amb="negocio" aria-pressed="false">Negocio</button></span></h3>
-    <p class="ayuda">De mayor a menor.</p><div id="cats"></div></section>
-  <section class="t m" id="t-gmes" hidden><h3>Gasto por gasto</h3><p class="ayuda">Separado según si era necesario.</p><div id="gmes-tot"></div><div id="gmes"></div></section>
-
   </div>
+
   <div class="panel" data-panel="sentry" hidden>
-  <div class="parte" id="p-sentry" style="--c:var(--ambar)"><span class="n" style="--c:var(--ambar)">3</span><div><h2>SENTRY-CODE</h2><p>Lo que ha ganado con clientes, lo que le deben y cómo va hacia la meta de ventas.</p></div></div>
-  <section class="t b"><h3>Ganancia real <span>desde el inicio</span></h3><p class="ayuda">Lo cobrado menos lo gastado en dominios, correo y placas.</p><div id="sentry"></div></section>
-  <section class="t a"><h3>Por cobrar</h3><p class="ayuda">Quién le debe, cuánto y de qué. En rojo lo que ya pasó su fecha.</p><div id="cobrar"></div></section>
-  <section class="t"><h3>Este mes y meta de ventas</h3><p class="ayuda">Lo que le anotó al bot como «negocio» este mes, y cuánto lleva vendido hacia la meta.</p><div id="negocio"></div></section>
-
+  <h2 id="p-sentry">SENTRY-CODE</h2>
+  <section class="t c" id="s-gan"><h3>Ganancia real <span>desde el inicio</span></h3><div id="sentry"></div></section>
+  <section class="t m" id="t-meta" hidden><h3>Meta de ventas <span>$2.000.000</span></h3><div id="meta"></div></section>
+  <section class="t m" id="s-neg"><h3>Negocio este mes</h3><p class="ayuda">Lo que anotó al bot como «negocio».</p><div id="negocio"></div></section>
+  <section class="t a" id="s-cob"><h3>Por cobrar</h3><p class="ayuda">En rojo, lo que ya pasó su fecha.</p><div id="cobrar"></div></section>
   </div>
+
   <div class="panel" data-panel="ventas" hidden>
-  <div class="parte" id="p-ventas"><span class="n" style="--c:var(--azul)">4</span><div><h2>Ventas</h2><p>Cómo van los negocios a los que les mandó una demo.</p></div></div>
-  <section class="t m"><h3>Negocios por etapa <span id="leads-al"></span></h3><p class="ayuda">De arriba hacia abajo: desde la demo armada hasta el cliente.</p><div id="leads"></div><div id="proximos"></div></section>
-  <section class="t m"><h3>Quién abrió su demo</h3><p class="ayuda">Aperturas reales de cada demo en los últimos 30 días.</p><div id="visitas"></div></section>
-
+  <h2 id="p-ventas">Ventas</h2>
+  <section class="t m"><h3>Negocios por etapa <span id="leads-al"></span></h3><div id="leads"></div></section>
+  <section class="t m" id="t-prox" hidden><h3>Próximos seguimientos <span id="prox-n"></span></h3><div id="proximos"></div></section>
+  <section class="t m"><h3>Quién abrió su demo <span>últimos 30 días</span></h3><div id="visitas"></div></section>
   </div>
+
   <div class="panel" data-panel="mov" hidden>
-  <div class="parte" id="p-mov"><span class="n" style="--c:var(--violeta)">5</span><div><h2>Movimientos</h2><p>Lo último que le anotó al bot, del más nuevo al más antiguo.</p></div></div>
-  <section class="t"><div id="ultimos"></div></section>
+  <h2 id="p-mov">Movimientos</h2>
+  <section class="t"><p class="ayuda" style="margin-top:0">Lo último que anotó al bot, del más nuevo al más antiguo.</p><div id="ultimos"></div></section>
   </div>
 </main>
 </div>
@@ -278,14 +306,13 @@ function pintar() {
   const atrC = (d.por_cobrar_crm || []).filter(x => x.fecha && x.fecha < d.hoy).reduce((s, x) => s + Number(x.monto || 0), 0);
   const prox = (d.proximos || []).slice().sort((a, b) => String(a.fecha).localeCompare(String(b.fecha))), atras = prox.filter(p => p.fecha && p.fecha < d.hoy).length;
   const li = (c, html) => '<li style="--c:var(--' + c + ')"><span>' + html + '</span></li>';
+  /* Solo lo que no está ya en las cuatro cifras de arriba: lo pendiente y lo atrasado primero, después la ganancia de SENTRY-CODE. */
   $('#resumen').innerHTML = [
-    cuentas.length ? li('verde', 'Tiene <b>' + plata(disp) + '</b> en sus cuentas' + (deuda ? ' y debe <b class="rojo">' + plata(deuda) + '</b> en la tarjeta de crédito.' : '.')) : '',
-    li('rojo', 'Este mes gastó <b>' + plata(gP + gN) + '</b>' + (gAnt ? ' (el mes pasado fueron ' + plata(gAnt) + ').' : '.')),
-    meDeben ? li('ambar', 'Le deben <b>' + plata(meDeben) + '</b>' + (atrC ? ', de eso <b class="rojo">' + plata(atrC) + '</b> ya está atrasado.' : '.')) : li('verde', 'Nadie le debe nada, según lo anotado.'),
-    cobS ? li('azul', 'Con SENTRY-CODE lleva una ganancia real de <b class="verde">' + plata(cobS - gasS) + '</b>' + (penS ? '; si le pagan todo, llega a <b>' + plata(cobS - gasS + penS) + '</b>.' : '.')) : '',
     falta(d, deuda).n ? li('rojo', 'Le quedan <b>' + falta(d, deuda).n + (falta(d, deuda).n === 1 ? ' cuenta' : ' cuentas') + '</b> por pagar este mes' + (falta(d, deuda).monto ? ', al menos <b>' + plata(falta(d, deuda).monto) + '</b>.' : '.')) : '',
+    atrC ? li('rojo', 'Hay <b class="rojo">' + plata(atrC) + '</b> en cobros a clientes que ya pasaron su fecha.') : '',
     atras ? li('rojo', 'Tiene <b>' + atras + (atras === 1 ? ' seguimiento atrasado' : ' seguimientos atrasados') + '</b> en Ventas.') : '',
-  ].filter(Boolean).join('');
+    cobS ? li('azul', 'Con SENTRY-CODE lleva una ganancia real de <b class="verde">' + plata(cobS - gasS) + '</b>' + (penS ? '; si le pagan todo, llega a <b>' + plata(cobS - gasS + penS) + '</b>.' : '.')) : '',
+  ].filter(Boolean).join('') || li('verde', 'Nada pendiente ni atrasado, según lo anotado.');
 
   pintarFijos(d, disp, deuda);
 
@@ -300,8 +327,11 @@ function pintar() {
   $('#eje-a').textContent = 'desde el ' + corta(dias[0]); $('#eje-b').textContent = 'día más alto: ' + plata(tope);
 
   /* --- cuentas --- */
+  /* si todos los saldos son del mismo día, la fecha va una sola vez junto al título */
+  const fechasSaldo = [...new Set((d.cuentas || []).map(c => c.actualizado))], unaFecha = fechasSaldo.length === 1;
+  $('#saldos-al').textContent = unaFecha ? 'al ' + corta(fechasSaldo[0]) : '';
   $('#cuentas').innerHTML = !(d.cuentas || []).length ? '<p class="vacio">Todavía no hay saldos. Escríbale al bot «saldo mach 20000».</p>' :
-    cuentas.slice().sort((a, b) => b.saldo - a.saldo).map(c => '<div class="par"><span>' + esc(CUENTAS[c.nombre] || c.nombre) + '<small>al ' + corta(c.actualizado) + '</small></span><em>' + plata(c.saldo) + '</em></div>').join('') +
+    cuentas.slice().sort((a, b) => b.saldo - a.saldo).map(c => '<div class="par"><span>' + esc(CUENTAS[c.nombre] || c.nombre) + (unaFecha ? '' : '<small>al ' + corta(c.actualizado) + '</small>') + '</span><em>' + plata(c.saldo) + '</em></div>').join('') +
     (cuentas.length > 1 ? '<div class="par total grande"><span>Total</span><em class="verde">' + plata(disp) + '</em></div>' : '') +
     deudas.map(c => '<div class="par"><span>' + esc(CUENTAS[c.nombre]) + '<small>lo que debe en la tarjeta</small></span><em class="rojo">' + plata(c.saldo) + '</em></div>').join('');
 
@@ -310,7 +340,8 @@ function pintar() {
   /* --- negocio --- */
   $('#negocio').innerHTML = '<div class="par"><span>Ganado</span><em class="verde">' + plata(iN) + '</em></div>' +
     '<div class="par"><span>Gastado</span><em>' + plata(gN) + '</em></div>' +
-    '<div class="par total grande"><span>Queda</span><em class="' + (iN - gN < 0 ? 'rojo' : 'verde') + '">' + plata(iN - gN) + '</em></div>' + metaVentas(crm);
+    '<div class="par total grande"><span>Queda</span><em class="' + (iN - gN < 0 ? 'rojo' : 'verde') + '">' + plata(iN - gN) + '</em></div>';
+  const mv = metaVentas(crm); $('#t-meta').hidden = !mv; $('#meta').innerHTML = mv;
 
   /* --- SENTRY-CODE desde el inicio: lo cobrado menos lo que se gastó (dominios, correo, placas), según el CRM. Los reembolsos que
      debe un cliente son gastos que vuelven, por eso se muestran aparte de las ventas por cobrar. --- */
@@ -318,10 +349,10 @@ function pintar() {
   $('#sentry').innerHTML = '<div class="par"><span>Cobrado a clientes</span><em class="verde">' + plata(cobS) + '</em></div>' +
     '<div class="par"><span>Gastado<small>dominios, correo y placas</small></span><em>−' + plata(gasS) + '</em></div>' +
     '<div class="par total grande"><span>Ganancia real hoy</span><em class="' + (cobS - gasS < 0 ? 'rojo' : 'verde') + '">' + plata(cobS - gasS) + '</em></div>' +
-    '<p class="sub" style="margin-top:20px">Lo que viene</p>' +
-    '<div class="par"><span>Por cobrar<small>ventas ' + plata(penS - reemb) + ' · reembolsos de gastos ' + plata(reemb) + '</small></span><em class="ambar">+' + plata(penS) + '</em></div>' +
-    '<div class="par total grande"><span>Si le pagan todo</span><em>' + plata(cobS - gasS + penS) + '</em></div>' +
-    '<p class="nota">Sale del CRM. Lo que le anota al bot como «negocio» va en «Negocio este mes».</p>';
+    '<p class="sub">Si le pagan lo que le deben</p>' +
+    '<div class="par"><span>Por cobrar<small>ventas ' + plata(penS - reemb) + ' · reembolsos ' + plata(reemb) + '</small></span><em class="ambar">+' + plata(penS) + '</em></div>' +
+    '<div class="par total grande"><span>Ganancia total</span><em>' + plata(cobS - gasS + penS) + '</em></div>' +
+    '<p class="nota">Sale del CRM. Lo anotado al bot va en «Negocio este mes».</p>';
 
   /* --- ventas --- */
   /* Embudo: cada etapa en orden, con nombre claro. Descartados y perdidos van aparte, en gris. */
@@ -329,15 +360,18 @@ function pintar() {
   const n = (e) => Number(((d.leads || []).find(l => l.estado === e) || {}).n || 0), topeL = Math.max(1, ...(d.leads || []).map(l => Number(l.n)));
   $('#leads-al').textContent = d.leads_al ? 'al ' + corta(d.leads_al) : '';
   const fuera = n('descartado') + n('perdido'), alcanzados = n('enviado') + n('contactado') + n('conversando') + n('propuesta') + n('cliente') + n('perdido');
-  $('#leads').innerHTML = (d.leads || []).length ? ETAPAS.filter(([e]) => n(e)).map(([e, t]) => '<div class="fila"><span>' + t + '</span><span class="barra"><i style="width:' + (100 * n(e) / topeL).toFixed(0) + '%;background:' + (e === 'cliente' ? 'var(--verde)' : e === 'nuevo' ? 'var(--ambar)' : 'var(--azul)') + '"></i></span><em' + (e === 'cliente' ? ' class="verde"' : '') + '>' + n(e) + '</em></div>').join('') +
-      (fuera ? '<div class="fila"><span style="color:var(--suave)">Descartados o perdidos</span><span class="barra"><i style="width:' + (100 * fuera / topeL).toFixed(0) + '%;background:var(--linea)"></i></span><em style="color:var(--suave)">' + fuera + '</em></div>' : '') +
-      (alcanzados ? '<div class="explica" style="margin:12px 0 0">De ' + alcanzados + ' negocios que recibieron su demo, ' + (n('conversando') + n('propuesta')) + ' están conversando (' + Math.round(100 * (n('conversando') + n('propuesta')) / alcanzados) + ' %) y <b class="verde">' + n('cliente') + ' son clientes</b> (' + Math.round(100 * n('cliente') / alcanzados) + ' %).' + (n('nuevo') ? ' Hay ' + n('nuevo') + ' demos listas esperando ser enviadas.' : '') + '</div>' : '')
+  const conv = n('conversando') + n('propuesta');
+  $('#leads').innerHTML = (d.leads || []).length ?
+      (alcanzados ? '<p class="explica">De ' + alcanzados + ' negocios que recibieron su demo, ' + conv + (conv === 1 ? ' está' : ' están') + ' conversando (' + Math.round(100 * conv / alcanzados) + ' %) y <b class="verde">' + n('cliente') + (n('cliente') === 1 ? ' es cliente' : ' son clientes') + '</b> (' + Math.round(100 * n('cliente') / alcanzados) + ' %).' + (n('nuevo') ? ' Hay ' + n('nuevo') + (n('nuevo') === 1 ? ' demo lista esperando' : ' demos listas esperando') + ' ser enviada' + (n('nuevo') === 1 ? '.' : 's.') : '') + '</p>' : '') +
+      ETAPAS.filter(([e]) => n(e)).map(([e, t]) => '<div class="fila"><span>' + t + '</span><span class="barra"><i style="width:' + (100 * n(e) / topeL).toFixed(0) + '%;background:' + (e === 'cliente' ? 'var(--verde)' : e === 'nuevo' ? 'var(--ambar)' : 'var(--azul)') + '"></i></span><em' + (e === 'cliente' ? ' class="verde"' : '') + '>' + n(e) + '</em></div>').join('') +
+      (fuera ? '<div class="fila"><span style="color:var(--suave)">Descartados o perdidos</span><span class="barra"><i style="width:' + (100 * fuera / topeL).toFixed(0) + '%;background:var(--linea)"></i></span><em style="color:var(--suave)">' + fuera + '</em></div>' : '')
     : '<p class="vacio">No hay prospectos en la base.</p>';
   const urg = prox.filter(p => p.fecha && p.fecha <= d.hoy);
   $('#t-hoy').hidden = !urg.length;
   $('#hoy').innerHTML = recortar(urg.map(p => '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em class="' + (p.fecha < d.hoy ? 'atr' : 'hoyp') + '">' + (p.fecha < d.hoy ? 'atrasado · ' + corta(p.fecha) : 'hoy') + '</em></div>'), 6, 'seguimientos');
-  $('#proximos').innerHTML = prox.length ? '<p class="sub" style="margin-top:20px">Próximos seguimientos' + (atras ? ' · <span class="atr">' + atras + ' atrasado' + (atras === 1 ? '' : 's') + '</span>' : '') + '</p>' +
-    prox.map(p => { const c = p.fecha < d.hoy ? 'atr' : p.fecha === d.hoy ? 'hoyp' : ''; return '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em class="' + c + '">' + (c === 'hoyp' ? 'hoy' : corta(p.fecha)) + '</em></div>'; }).join('') : '';
+  $('#t-prox').hidden = !prox.length;
+  $('#prox-n').innerHTML = atras ? '<span class="atr">' + atras + ' atrasado' + (atras === 1 ? '' : 's') + '</span>' : '';
+  $('#proximos').innerHTML = prox.length ? recortar(prox.map(p => { const c = p.fecha < d.hoy ? 'atr' : p.fecha === d.hoy ? 'hoyp' : ''; return '<div class="par"><span>' + esc(p.cuenta || '—') + '<small>' + esc(p.proxima || p.estado) + '</small></span><em class="' + c + '">' + (c === 'hoyp' ? 'hoy' : corta(p.fecha)) + '</em></div>'; }), 8, 'seguimientos') : '';
 
   /* --- por cobrar --- */
   const esP = t => /^prestamo a /.test(t || ''), nombre = t => titulo(String(t).replace(/^prestamo a /, ''));
@@ -386,7 +420,8 @@ function pintarGastosMes(d) {
   const grupos = { si: [], no: [], revisar: [] };
   lista.forEach(g => grupos[claseGasto(g)].push(g));
   const total = k => grupos[k].reduce((s, g) => s + Number(g.monto || 0), 0);
-  $('#gmes-tot').innerHTML = Object.keys(G).map(k => '<div class="par"><span>' + G[k][0] + '<small>' + grupos[k].length + (grupos[k].length === 1 ? ' gasto' : ' gastos') + '</small></span><em><span class="pill ' + G[k][1] + '">' + plata(total(k)) + '</span></em></div>').join('');
+  $('#gmes-tot').innerHTML = Object.keys(G).map(k => '<div class="par"><span>' + G[k][0] + '<small>' + grupos[k].length + (grupos[k].length === 1 ? ' gasto' : ' gastos') + '</small></span><em class="' + (grupos[k].length ? G[k][1] : '') + '">' + plata(total(k)) + '</em></div>').join('');
+  $('#gmes-n').textContent = lista.length ? 'Ver ' + (lista.length === 1 ? 'el gasto' : 'los ' + lista.length + ' gastos') : 'Ver cada gasto';
   $('#gmes').innerHTML = lista.length ? Object.keys(G).filter(k => grupos[k].length).map(k => '<h4 class="gmes-h">' + G[k][0] + '</h4>' +
     grupos[k].map(g => '<div class="par"><span>' + esc(g.concepto) + '<small>' + corta(g.fecha) + ' · ' + esc(g.ambito) + ' · ' + esc(g.categoria) + '</small></span><em>-' + plata(g.monto) + '</em></div>').join('')).join('')
     : '<p class="vacio">Todavía no hay gastos este mes.</p>';
@@ -404,7 +439,9 @@ function pintarFijos(d, disp, deuda) {
   const cuentas = l.filter(f => !f.variable), total = cuentas.reduce((s, f) => s + (f.monto || f.pagado), 0), pagado = cuentas.reduce((s, f) => s + f.pagado, 0), f = falta(d, deuda), sinMonto = cuentas.filter(x => !x.monto && !x.pagado).length;
   $('#fijos-tot').innerHTML = '<div>Total del mes<b>' + plata(total) + '</b></div><div>Ya pagado<b class="verde">' + plata(pagado) + '</b></div><div>Falta pagar<b class="' + (f.monto ? 'rojo' : 'verde') + '">' + plata(f.monto) + '</b></div>';
   const a = total ? Math.min(100, 100 * pagado / total) : 0; $('#fijos-barra').innerHTML = '<i class="c1" style="width:' + a.toFixed(1) + '%"></i>'; $('#fijos-barra').setAttribute('role', 'img'); $('#fijos-barra').setAttribute('aria-label', 'Pagado ' + plata(pagado) + ' de ' + plata(total));
-  $('#fijos').innerHTML = l.map(x => '<div class="par"><span>' + esc(x.nombre) + '<small>' + (x.variable ? 'gastado este mes' : x.listo ? 'pagado este mes' : x.pagado ? 'abonado ' + plata(x.pagado) : x.monto ? 'por pagar' : 'por pagar · sin monto definido') + '</small></span><em>' +
+  /* la etiqueta Pagado/Falta ya dice el estado; abajo del nombre solo va lo que agrega algo */
+  const det = x => x.variable ? 'gastado este mes' : x.listo ? '' : x.pagado ? 'abonado ' + plata(x.pagado) : x.monto ? '' : 'sin monto definido';
+  $('#fijos').innerHTML = l.map(x => '<div class="par"><span>' + esc(x.nombre) + (det(x) ? '<small>' + det(x) + '</small>' : '') + '</span><em>' +
     (x.variable ? plata(x.pagado) : '<span class="pill ' + (x.listo ? 'verde">Pagado' : 'rojo">Falta') + '</span>' + (x.monto ? plata(x.monto) : x.pagado ? plata(x.pagado) : '—')) + '</em></div>').join('') +
     '<p class="nota">' + (f.monto && disp ? 'Con lo que tiene en sus cuentas, después de pagar lo que falta le quedan <b class="' + (disp - f.monto < 0 ? 'rojo' : 'verde') + '">' + plata(disp - f.monto) + '</b>. ' : '') + (sinMonto ? sinMonto + (sinMonto === 1 ? ' cuenta sin monto no suma' : ' cuentas sin monto no suman') + ' en el total.' : '') + '</p>';
 }
@@ -422,12 +459,12 @@ function cobrosClientes(cc, hoy) {
   const porCli = {}; cc.slice().sort((a, b) => String(a.fecha || '9999').localeCompare(String(b.fecha || '9999')) || b.monto - a.monto).forEach(x => { (porCli[x.quien] = porCli[x.quien] || []).push(x); });
   const suma = c => porCli[c].reduce((s, x) => s + x.monto, 0);
   const clis = Object.keys(porCli).sort((a, b) => suma(b) - suma(a));
-  let txt = 'Son <b>' + cc.length + ' cobros</b> (' + clis.map(c => porCli[c].length + ' de ' + esc(c)).join(' y ') + ') por <b>' + plata(total) + '</b>.';
+  let txt = 'Son <b>' + cc.length + (cc.length === 1 ? ' cobro' : ' cobros') + '</b> (' + clis.map(c => porCli[c].length + ' de ' + esc(c)).join(' y ') + ') por <b>' + plata(total) + '</b>.';
   if (conFecha) txt += (atr ? ' <b class="rojo">' + plata(atr) + '</b> ya pasaron su fecha.' : ' Nada atrasado.') + ' De aquí a fin de mes se pueden cobrar <b>' + plata(mes) + '</b>.';
   if (mantT) txt += ' Las mantenciones (' + plata(mantT) + ') todavía no vencen.';
   const item = x => { const a = x.fecha && x.fecha < hoy;
     return '<div class="par"><span>' + esc(corto(x.que)) + '<small>' + (x.fecha ? (a ? '<span class="pill rojo">Atrasado</span>desde el ' : 'vence el ') + corta(x.fecha) : '') + '</small></span><em' + (a ? ' class="atr"' : '') + '>' + plata(x.monto) + '</em></div>'; };
-  return '<div class="explica">' + txt + '</div>' +
+  return '<p class="explica">' + txt + '</p>' +
     clis.map(c => '<div class="cli"><div class="par"><span>' + esc(c) + '<small>' + porCli[c].length + (porCli[c].length === 1 ? ' cobro' : ' cobros') + '</small></span><em class="ambar">' + plata(suma(c)) + '</em></div>' + porCli[c].map(item).join('') + '</div>').join('') +
     '<div class="par total grande"><span>Total clientes</span><em class="ambar">' + plata(total) + '</em></div>' +
     (mants.length ? '<p class="sub">Mantenciones mensuales</p>' + mants.map(x => '<div class="par"><span>' + esc(x.quien) + '<small>' + (x.fecha ? 'primer cobro el ' + corta(x.fecha) : esc(corto(x.que))) + '</small></span><em>' + plata(x.monto) + ' al mes</em></div>').join('') +
@@ -439,9 +476,9 @@ const META = 2000000;
 function metaVentas(crm) {
   const cob = Number(crm.ganado || 0), pend = Number(crm.por_cobrar || 0), tot = cob + pend; if (!tot) return '';
   const a = Math.min(100, 100 * cob / META), b = Math.min(100 - a, 100 * pend / META);
-  return '<p class="sub" style="margin-top:20px">Meta de ventas: ' + plata(META) + '</p><div class="meta" role="img" aria-label="Vendido ' + plata(tot) + ' de ' + plata(META) + '"><i class="c1" style="width:' + a.toFixed(1) + '%"></i><i class="c2" style="width:' + b.toFixed(1) + '%"></i></div>' +
-    '<div class="ley" style="margin-bottom:4px"><span><i style="background:var(--verde)"></i>Cobrado</span><span><i style="background:var(--ambar);opacity:.75"></i>Por cobrar</span></div>' +
-    '<div class="par"><span>Vendido en total<small>cobrado ' + plata(cob) + ' · por cobrar ' + plata(pend) + '</small></span><em>' + Math.round(100 * tot / META) + ' %</em></div>' +
+  return '<div class="par grande"><span>Vendido en total<small>cobrado ' + plata(cob) + ' · por cobrar ' + plata(pend) + '</small></span><em>' + Math.round(100 * tot / META) + ' %</em></div>' +
+    '<div class="meta" role="img" aria-label="Vendido ' + plata(tot) + ' de ' + plata(META) + '"><i class="c1" style="width:' + a.toFixed(1) + '%"></i><i class="c2" style="width:' + b.toFixed(1) + '%"></i></div>' +
+    '<div class="ley"><span><i style="background:var(--verde)"></i>Cobrado</span><span><i style="background:var(--ambar);opacity:.75"></i>Por cobrar</span></div>' +
     (tot < META ? '<p class="nota">Faltan ' + plata(META - tot) + ' (unas ' + Math.ceil((META - tot) / 80000) + ' páginas de $80.000).</p>' : '<p class="nota verde">¡Meta cumplida!</p>');
 }
 
@@ -454,14 +491,13 @@ function pintarCategorias() {
 document.querySelectorAll('.pest button').forEach(b => b.addEventListener('click', () => {
   ambito = b.dataset.amb; document.querySelectorAll('.pest button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (datos) pintarCategorias();
 }));
-/* El menú lleva a cada parte sin cambiar la dirección (la clave también viaja después del #). */
-/* Pestañas: muestra una sección a la vez y recuerda la última que abrió en este aparato. */
+/* Pestañas: muestra una sección a la vez, sin cambiar la dirección (la clave viaja después del #), y recuerda la última que abrió en este aparato. */
 function verPanel(v, mover) {
   if (!document.querySelector('[data-panel="' + v + '"]')) v = 'resumen';
   document.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== v; });
   document.querySelectorAll('nav [data-ver]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ver === v)));
   try { localStorage.setItem('tablero-panel', v); } catch {}
-  if (mover) window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (mover) window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 document.querySelectorAll('nav [data-ver]').forEach(b => b.addEventListener('click', () => verPanel(b.dataset.ver, true)));
 let panelInicial = 'resumen'; try { panelInicial = localStorage.getItem('tablero-panel') || 'resumen'; } catch {}
